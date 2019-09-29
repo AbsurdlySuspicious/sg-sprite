@@ -1,6 +1,6 @@
 use super::*;
 use crate::raise;
-use image::{self, imageops, GenericImage, GenericImageView, ImageBuffer, Pixels, Rgba, RgbaImage};
+use image::{self, imageops, GenericImage, GenericImageView, ImageBuffer, Pixels, Rgba, RgbaImage, DynamicImage};
 use parse::*;
 use std::format as fmt;
 use std::fs::File;
@@ -70,11 +70,14 @@ pub fn draw_dep(
     }
   }
 
-  draw_sprites(src_img, &out, lst.as_ref(), pass, lay)
+  eprint!("\rdraw: decode");
+  let mut src = image::open(src_img)?;
+
+  draw_sprites(&mut src, &out, lst.as_ref(), pass, lay)
 }
 
 pub fn draw_sprites(
-  png_in: &Path,
+  src: &mut DynamicImage,
   png_out: &Path,
   sprites_rev: &[&Sprite],
   pass: usize,
@@ -85,9 +88,6 @@ pub fn draw_sprites(
   let (x_mid, y_mid) = lay.sprite_xy_min;
   let x_mid = x_mid.abs();
   let y_mid = y_mid.abs();
-
-  eprint!("\rdraw {}: decode", pass);
-  let mut src = image::open(png_in)?;
 
   eprint!("\rdraw {}: canvas", pass);
   let mut canvas = ImageBuffer::from_pixel(
@@ -109,7 +109,7 @@ pub fn draw_sprites(
       let (cx, cy) = ((x_mid + c.img_x) as u32, (y_mid + c.img_y) as u32);
       let (sx, sy) = (c.chunk_x as u32 - 1, c.chunk_y as u32 - 1);
       let mut fdst = imageops::crop(&mut canvas, cx, cy, BLOCK_W, BLOCK_H);
-      let fsrc = imageops::crop(&mut src, sx, sy, BLOCK_W, BLOCK_H);
+      let fsrc = imageops::crop(src, sx, sy, BLOCK_W, BLOCK_H);
 
       imageops::replace(&mut fdst, &fsrc, 0, 0);
       chunk_c += 1;
