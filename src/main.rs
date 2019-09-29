@@ -105,7 +105,7 @@ fn lay_in(out_dir: &Path, lay_path: &String, status: impl Fn(&str)) -> Result<()
 
   for (pass, sp) in leafs.enumerate() {
 
-    is sp.s.t == Overlay {
+    if sp.s.t == Overlay {
       eprintln!("[W] Overlays are unsupported, skipping");
     }
 
