@@ -44,7 +44,7 @@ fn main_() -> Result<(), PErr> {
       let png_i = Path::new(&png_p);
 
       println!(
-        "open: ({}, {}) {}",
+        "[{}/{}] {}",
         lay_counter,
         total,
         png_i.file_name().and_then(|f| f.to_str()).unwrap_or("")
