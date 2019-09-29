@@ -42,7 +42,9 @@ pub fn draw_all(src_img: &Path, out_dir: &Path, lay: &ParsedLay) -> Result<(), P
       _ => continue,
     };
 
-    let out = out_dir.with_file_name(fmt!("{}_{}{}", sprite_name, name_suf, SRC_EXT));
+    let mut out = PathBuf::new();
+    out.push(&out_dir);
+    out.push(fmt!("{}_{}{}", sprite_name, name_suf, SRC_EXT));
 
     let mut lst: Vec<&Sprite> = Vec::with_capacity(10);
 
