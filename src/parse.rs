@@ -1,8 +1,10 @@
 use super::*;
 use byteorder::{LittleEndian, ReadBytesExt};
+use std::collections::HashMap;
 use std::format as fmt;
 use std::fs::File;
 use std::io::{self, BufReader, Read};
+use SpriteT::*;
 
 const COMMON_BUF_SZ: usize = 32;
 const HEADER_SZ: usize = 4 * 2; // [u32:sprite_c][u32:chunk_c]
@@ -10,9 +12,17 @@ const SPRITE_SZ: usize = 4 * 3; // [32][u32:chunk_offset][u32:chunk_count]
 const CHUNK_SZ: usize = 4 * 4; // [f32:img_x][f32:img_y][f32:chunk_x][f32:chunk_y]
 const SPRITE_SIZE_ADD: i32 = 32; // dangling block
 
+#[derive(PartialEq, Debug)]
+pub enum SpriteT {
+  Base,    // 0x00 Base sprite
+  Sub,     // 0x20 Sub sprite (implicit dep on base)
+  Dep(u8), // 0x40 Sprite with dep on sub
+}
+
 #[derive(Debug)]
 pub struct Sprite {
-  //pre: [u8; 4],
+  pub t: SpriteT,
+  pub id: u8,
   pub c_offset: usize,
   pub c_count: usize,
 }
@@ -27,6 +37,7 @@ pub struct Chunk {
 
 pub struct ParsedLay {
   pub sprites: Vec<Sprite>,
+  pub sub_map: HashMap<u8, usize>,
   pub chunks: Vec<Chunk>,
   pub sprite_w: u32,
   pub sprite_h: u32,
@@ -68,6 +79,7 @@ pub fn parse_lay(src_f: &mut File) -> Result<ParsedLay, PErr> {
   }
 
   let mut sprites: Vec<Sprite> = Vec::with_capacity(sprite_count as usize);
+  let mut sub_map: HashMap<u8, usize> = HashMap::new();
 
   // read sprites
   for _i in 0..sprite_count {
@@ -75,14 +87,38 @@ pub fn parse_lay(src_f: &mut File) -> Result<ParsedLay, PErr> {
     bf.read_exact(buf)?;
 
     let buf = &mut buf.as_ref();
-    read_u32_le(buf)?; // discard pre
+    let mut head = [0u8; 4];
+    buf.read_exact(&mut head)?;
+
+    if head[2] != 0 {
+      raise("incorrect sprite head (b3)")?;
+    }
 
     let s = Sprite {
+      t: match head[3] {
+        0x00 => Base,
+        0x20 => Sub,
+        0x40 => Dep(head[1]),
+        _ => return raise("wrong sprite type"),
+      },
+      id: head[0],
       c_offset: read_u32_le(buf)? as usize,
       c_count: read_u32_le(buf)? as usize,
     };
 
-    sprites.push(s);
+    if s.t == Sub {
+      sub_map.insert(s.id, sprites.len()); // will be occupied by index of this sprite..
+    }
+
+    sprites.push(s); // ..here
+  }
+
+  if sprites.is_empty() {
+    raise("no sprites")?;
+  }
+
+  if sprites[0].t != Base {
+    raise("first sprite isn't Base")?;
   }
 
   let mut chunks: Vec<Chunk> = Vec::with_capacity(chunk_count as usize);
@@ -128,17 +164,10 @@ pub fn parse_lay(src_f: &mut File) -> Result<ParsedLay, PErr> {
 
   println!("sprite size: {}, {}", sprite_w, sprite_h);
 
-  if sprite_count > 1 {
-    //raise("sprite_c > 1 unimplemented")?
-  }
-
-  if sprites.is_empty() {
-    raise("no sprites")?;
-  }
-
   let res = ParsedLay {
     chunks,
     sprites,
+    sub_map,
     sprite_w: sprite_w as u32,
     sprite_h: sprite_h as u32,
     sprite_xy_min: (sprite_min_x, sprite_min_y),
