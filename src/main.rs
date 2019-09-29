@@ -33,9 +33,9 @@ fn main_() -> Result<(), PErr> {
     return raise("wrong args");
   }
 
-  let png_o = Path::new(&args[0]);
+  let png_o = Path::new(&args[1]);
 
-  for lay_i in &args[1..] {
+  for lay_i in &args[2..] {
     if lay_i.ends_with(LAY_EXT) {
       let png_p = fmt!("{}{}", lay_i.trim_end_matches(LAY_EXT), SRC_EXT);
       let png_i = Path::new(&png_p);
