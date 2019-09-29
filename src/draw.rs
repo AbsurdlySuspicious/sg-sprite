@@ -10,7 +10,7 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
 
-pub const ENABLE_DRAWING: bool = false;
+pub const ENABLE_DRAWING: bool = true;
 
 pub const BLOCK_W: u32 = 32;
 pub const BLOCK_H: u32 = 32;
@@ -23,6 +23,7 @@ pub struct DrawPrep {
 
 pub fn draw_prep(img: &Path) -> Result<DrawPrep, PErr> {
   let img = if ENABLE_DRAWING {
+    eprint!("draw: decode");
     image::open(img)?
   } else {
     DynamicImage::new_rgba8(0, 0)
@@ -37,8 +38,9 @@ pub fn draw_sprites(
   pass: usize,
   lay: &ParsedLay,
 ) -> Result<(), PErr> {
-
-  if !ENABLE_DRAWING { return Ok(()) }
+  if !ENABLE_DRAWING {
+    return Ok(());
+  }
   eprint!("draw {}:", pass);
 
   let (x_mid, y_mid) = lay.sprite_xy_min;

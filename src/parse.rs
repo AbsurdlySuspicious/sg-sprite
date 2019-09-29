@@ -40,7 +40,7 @@ pub struct ParsedLay {
   pub sprites: Vec<Sprite>,
   pub sub_map: HashMap<u8, usize>,
   pub chunks: Vec<Chunk>,
-  pub has_base: bool,
+  pub base_dep: Option<usize>,
   pub sprite_w: u32,
   pub sprite_h: u32,
   pub sprite_xy_min: (i32, i32),
@@ -138,10 +138,9 @@ pub fn parse_lay(src_f: &mut File) -> Result<ParsedLay, PErr> {
   }
 
   // if the base is absent - don't depend subs on anything
-  let has_base = match sprites[0].t {
-    Base => true,
-    Sub => false,
-    _ => return raise("first sprite isn't base or sub"),
+  let base_dep = match sprites[0].t {
+    Base => Some(0),
+    _ => None,
   };
 
   let mut chunks: Vec<Chunk> = Vec::with_capacity(chunk_count as usize);
@@ -191,7 +190,7 @@ pub fn parse_lay(src_f: &mut File) -> Result<ParsedLay, PErr> {
     chunks,
     sprites,
     sub_map,
-    has_base: has_base,
+    base_dep,
     sprite_w: sprite_w as u32,
     sprite_h: sprite_h as u32,
     sprite_xy_min: (sprite_min_x, sprite_min_y),

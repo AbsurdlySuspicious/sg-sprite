@@ -15,6 +15,7 @@ use dep::*;
 use draw::*;
 use parse::*;
 use std::path::{Path, PathBuf};
+use crate::parse::SpriteT::Overlay;
 
 custom_error! { pub PErr
   IO{source: io::Error} = "IO: {source}",
@@ -62,7 +63,7 @@ fn main_() -> Result<(), PErr> {
   let total = args.len() - 2;
   let mut lay_counter = 0usize;
 
-  let status = |c: usize| move |t: &str| println!("[{}/{}] {}", c, total, t);
+  let status = |c: usize| move |t: &str| println!("[{}/{}] {}", c + 1, total, t);
 
   for lay_i in &args[2..] {
     if let Err(e) = lay_in(&out_dir, lay_i, status(lay_counter)) {
@@ -100,10 +101,14 @@ fn lay_in(out_dir: &Path, lay_path: &String, status: impl Fn(&str)) -> Result<()
   let dep_refs = resolve_rc(&lay);
   let leafs = leaf_sprites(&dep_refs);
 
-  eprint!("draw: decode");
   let mut src = draw_prep(&src_pa)?;
 
   for (pass, sp) in leafs.enumerate() {
+
+    is sp.s.t == Overlay {
+      eprintln!("[W] Overlays are unsupported, skipping");
+    }
+
     let s = sp.s;
     let name_suf = match s.t {
       SpriteT::Base => fmt!("b{}", s.id),
