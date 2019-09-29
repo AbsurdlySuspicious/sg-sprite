@@ -2,6 +2,7 @@ use super::*;
 use crate::raise;
 use image::{self, imageops, GenericImage, GenericImageView, ImageBuffer, Pixels, Rgba, RgbaImage};
 use parse::*;
+use std::format as fmt;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
@@ -22,7 +23,7 @@ pub fn draw_sprite(
     None => raise("wrong sprite index")?,
   };
 
-  println!("draw: sprite {}", sprite_idx);
+  eprint!("draw {}:", sprite_idx);
 
   let (x_mid, y_mid) = lay.sprite_xy_min;
   let x_mid = x_mid.abs();
@@ -32,10 +33,10 @@ pub fn draw_sprite(
   let chunk_e = chunk_s + sp.c_count;
   let chunks = &lay.chunks[chunk_s..chunk_e];
 
-  println!("draw: decoding png_in");
+  eprint!("\rdraw {}: decode", sprite_idx);
   let mut src = image::open(png_in)?;
 
-  println!("draw: canvas");
+  eprint!("\rdraw {}: canvas", sprite_idx);
   let mut canvas = ImageBuffer::from_pixel(
     lay.sprite_w + CANVAS_PAD_W,
     lay.sprite_h + CANVAS_PAD_H,
@@ -43,7 +44,7 @@ pub fn draw_sprite(
   );
 
   for (i, c) in chunks.iter().enumerate() {
-    print!("\rdraw: chunk {}", i);
+    eprint!("\rdraw {}: chunk {}", sprite_idx, i);
 
     let (cx, cy) = ((x_mid + c.img_x) as u32, (y_mid + c.img_y) as u32);
     let (sx, sy) = (c.chunk_x as u32 - 1, c.chunk_y as u32 - 1);
@@ -53,9 +54,9 @@ pub fn draw_sprite(
     imageops::replace(&mut fdst, &fsrc, 0, 0);
   }
 
-  println!("\ndraw: encoding png_out");
+  eprint!(" [encode]");
   canvas.save(png_out)?;
 
-  println!("draw: sprite {} done", sprite_idx);
+  eprintln!(" [done]");
   Ok(())
 }
