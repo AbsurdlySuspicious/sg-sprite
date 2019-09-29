@@ -35,11 +35,11 @@ pub fn draw_all(src_img: &Path, out_dir: &Path, lay: &ParsedLay) -> Result<(), P
   let mut pass = 0usize;
   for sp in &lay.sprites
   {
-
     let name_suf = match sp.t {
-      SpriteT::Base => fmt!("b{}", sp.id),
-      SpriteT::Sub => fmt!("s{}", sp.id),
+      //SpriteT::Base => fmt!("b{}", sp.id),
+      //SpriteT::Sub => fmt!("s{}", sp.id),
       SpriteT::Dep(d) => fmt!("d{}_{}", d, sp.id),
+      _ => continue,
     };
 
     let out = out_dir.with_file_name(fmt!("{}_{}{}", sprite_name, name_suf, SRC_EXT));
