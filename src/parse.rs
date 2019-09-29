@@ -17,6 +17,7 @@ pub enum SpriteT {
   Base,    // 0x00 Base sprite
   Sub,     // 0x20 Sub sprite (implicit dep on base)
   Dep(u8), // 0x40 Sprite with dep on sub
+  Overlay, // 0x50 Transparent overlay
 }
 
 #[derive(Debug)]
@@ -39,6 +40,7 @@ pub struct ParsedLay {
   pub sprites: Vec<Sprite>,
   pub sub_map: HashMap<u8, usize>,
   pub chunks: Vec<Chunk>,
+  pub has_base: bool,
   pub sprite_w: u32,
   pub sprite_h: u32,
   pub sprite_xy_min: (i32, i32),
@@ -90,21 +92,33 @@ pub fn parse_lay(src_f: &mut File) -> Result<ParsedLay, PErr> {
     let mut head = [0u8; 4];
     buf.read_exact(&mut head)?;
 
-    if head[2] != 0 {
-      raise("incorrect sprite head (b3)")?;
-    }
-
     let s = Sprite {
       t: match head[3] {
         0x00 => Base,
         0x20 => Sub,
         0x40 => Dep(head[1]),
-        _ => return raise("wrong sprite type"),
+        0x50 => Overlay,
+        _ => return raise(fmt!("wrong sprite type 0x{}", hex::encode(&head[3..4]))),
       },
       id: head[0],
       c_offset: read_u32_le(buf)? as usize,
       c_count: read_u32_le(buf)? as usize,
     };
+
+    // format warnings
+    match s.t {
+      Overlay => {
+        eprintln!("[W] Overlay sprite: {}", hex::encode(head.as_ref()));
+        if head[1] != 0 || head[2] != 16 {
+          eprintln!("[W] ambiguous overlay head [1..3]: 0x{}", hex::encode(&head[1..3]))
+        }
+      }
+      _ => {
+        if head[2] != 0 {
+          eprintln!("[W] ambiguous sprite head [2]: 0x{}", hex::encode(&head[2..3]));
+        }
+      }
+    }
 
     if s.t == Sub {
       sub_map.insert(s.id, sprites.len()); // will be occupied by index of this sprite..
@@ -117,9 +131,12 @@ pub fn parse_lay(src_f: &mut File) -> Result<ParsedLay, PErr> {
     raise("no sprites")?;
   }
 
-  if sprites[0].t != Base {
-    raise("first sprite isn't Base")?;
-  }
+  // if the base is absent - don't depend subs on anything
+  let has_base = match sprites[0].t {
+    Base => true,
+    Sub => false,
+    _ => return raise("first sprite isn't base or sub")
+  };
 
   let mut chunks: Vec<Chunk> = Vec::with_capacity(chunk_count as usize);
   let mut sprite_max_x: i32 = 0;
@@ -154,20 +171,21 @@ pub fn parse_lay(src_f: &mut File) -> Result<ParsedLay, PErr> {
     chunks.push(s);
   }
 
-  println!(
+  /*println!(
     "sprite max/min x,y: {}, {} / {}, {}",
     sprite_max_x, sprite_max_y, sprite_min_x, sprite_min_y
-  );
+  );*/
 
   let sprite_w = sprite_max_x + sprite_min_x.abs() + SPRITE_SIZE_ADD;
   let sprite_h = sprite_max_y + sprite_min_y.abs() + SPRITE_SIZE_ADD;
 
-  println!("sprite size: {}, {}", sprite_w, sprite_h);
+  //println!("sprite size: {}, {}", sprite_w, sprite_h);
 
   let res = ParsedLay {
     chunks,
     sprites,
     sub_map,
+    has_base: has_base,
     sprite_w: sprite_w as u32,
     sprite_h: sprite_h as u32,
     sprite_xy_min: (sprite_min_x, sprite_min_y),
