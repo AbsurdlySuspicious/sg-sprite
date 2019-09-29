@@ -13,29 +13,12 @@ pub const BLOCK_H: u32 = 32;
 pub const CANVAS_PAD_W: u32 = 0;
 pub const CANVAS_PAD_H: u32 = 0;
 
-pub fn draw_all(src_img: &Path, out_dir: &Path, lay: &ParsedLay) -> Result<(), PErr> {
-  for (pass, idx) in lay
-    .sprites
-    .iter()
-    .enumerate()
-    .filter_map(|(n, s)| match s.t {
-      SpriteT::Dep(_) => Some(n),
-      _ => None,
-    })
-    .enumerate()
-  {
-    draw_dep(src_img, out_dir, lay, idx, pass)?;
-  }
-  Ok(())
+pub fn decode_img(img: &Path) -> Result<DynamicImage, PErr> {
+  Ok(image::open(img)?)
 }
 
-pub fn draw_dep(
-  src_img: &Path,
-  out_dir: &Path,
-  lay: &ParsedLay,
-  sprite_idx: usize,
-  pass: usize,
-) -> Result<(), PErr> {
+pub fn draw_all(src_img: &Path, out_dir: &Path, lay: &ParsedLay) -> Result<(), PErr> {
+
   if !out_dir.is_dir() {
     raise("out isn't a directory")?
   }
@@ -46,34 +29,39 @@ pub fn draw_dep(
   };
   let sprite_name = sprite_name.trim_end_matches(SRC_EXT);
 
-  let name_suf = match lay.sprites.get(sprite_idx) {
-    None => return raise("wrong sprite index"),
-    Some(s) => match s.t {
-      SpriteT::Base => fmt!("b{}", s.id),
-      SpriteT::Sub => fmt!("s{}", s.id),
-      SpriteT::Dep(d) => fmt!("d{}_{}", d, s.id),
-    },
-  };
+  eprint!("\rdraw: decode");
+  let mut src = decode_img(src_img)?;
 
-  let out = out_dir.with_file_name(fmt!("{}_{}{}", sprite_name, name_suf, SRC_EXT));
+  let mut pass = 0usize;
+  for sp in &lay.sprites
+  {
 
-  let mut lst: Vec<&Sprite> = Vec::with_capacity(10);
+    let name_suf = match sp.t {
+      SpriteT::Base => fmt!("b{}", sp.id),
+      SpriteT::Sub => fmt!("s{}", sp.id),
+      SpriteT::Dep(d) => fmt!("d{}_{}", d, sp.id),
+    };
 
-  let mut next = Some(sprite_idx);
-  while let Some(n) = next {
-    let s = &lay.sprites[n];
-    lst.push(s);
-    next = match &s.t {
-      SpriteT::Base => None,
-      SpriteT::Sub => Some(0), // base
-      SpriteT::Dep(d) => Some(lay.sub_map[d]),
+    let out = out_dir.with_file_name(fmt!("{}_{}{}", sprite_name, name_suf, SRC_EXT));
+
+    let mut lst: Vec<&Sprite> = Vec::with_capacity(10);
+
+    let mut next = Some(sp);
+    while let Some(s) = next {
+      lst.push(s);
+      let ni = match &s.t {
+        SpriteT::Base => None,
+        SpriteT::Sub => Some(0), // base
+        SpriteT::Dep(d) => Some(lay.sub_map[d]),
+      };
+      next = ni.map(|i| &lay.sprites[i]);
     }
+
+    draw_sprites(&mut src, &out, lst.as_ref(), pass, lay)?;
+    pass += 1;
   }
 
-  eprint!("\rdraw: decode");
-  let mut src = image::open(src_img)?;
-
-  draw_sprites(&mut src, &out, lst.as_ref(), pass, lay)
+  Ok(())
 }
 
 pub fn draw_sprites(
