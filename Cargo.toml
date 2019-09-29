@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 custom_error = "1.7.1"
+structopt = "0.3"
 byteorder = "1.3.2"
 image = "0.22.2"
 hex = "0.3.2"

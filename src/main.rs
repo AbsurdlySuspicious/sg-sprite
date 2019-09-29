@@ -6,16 +6,33 @@ use std::fmt::Display;
 use std::format as fmt;
 use std::fs::File;
 use std::io;
+use structopt::StructOpt;
 
 mod dep;
 mod draw;
 mod parse;
 
+use crate::parse::SpriteT::Overlay;
 use dep::*;
 use draw::*;
 use parse::*;
 use std::path::{Path, PathBuf};
-use crate::parse::SpriteT::Overlay;
+
+#[derive(StructOpt, Debug)]
+#[structopt()]
+struct Opts {
+  /// Output dir
+  #[structopt(short, long, parse(from_os_str))]
+  dir: PathBuf,
+
+  /// Limit variants to draw per sprite
+  #[structopt(short, long)]
+  limit: Option<usize>,
+
+  /// .lay files to parse
+  #[structopt(name = "LAY_FILES", parse(from_os_str))]
+  lay_files: Vec<PathBuf>,
+}
 
 custom_error! { pub PErr
   IO{source: io::Error} = "IO: {source}",
@@ -47,26 +64,24 @@ fn main() {
 }
 
 fn main_() -> Result<(), PErr> {
-  let args: Vec<_> = env::args().collect();
-
-  if args.len() < 2 {
-    println!("Usage: <OUT_DIR> <LAY_FILE> [LAY_FILES...]");
-    return raise("wrong args");
-  }
-
-  let out_dir = Path::new(&args[1]);
+  let o = Opts::from_args();
+  let out_dir = o.dir;
 
   if !out_dir.is_dir() {
     raise("out_dir isn't a directory")?
   }
 
-  let total = args.len() - 2;
+  let total = o.lay_files.len();
   let mut lay_counter = 0usize;
+
+  if total == 0 {
+    return raise("no .lay files provided");
+  }
 
   let status = |c: usize| move |t: &str| println!("[{}/{}] {}", c + 1, total, t);
 
-  for lay_i in &args[2..] {
-    if let Err(e) = lay_in(&out_dir, lay_i, status(lay_counter)) {
+  for lay_i in &o.lay_files {
+    if let Err(e) = lay_in(&out_dir, lay_i, o.limit, status(lay_counter)) {
       print_err(e);
     }
 
@@ -76,8 +91,14 @@ fn main_() -> Result<(), PErr> {
   Ok(())
 }
 
-fn lay_in(out_dir: &Path, lay_path: &String, status: impl Fn(&str)) -> Result<(), PErr> {
-  let lay_i = Path::new(lay_path);
+fn lay_in(
+  out_dir: &Path,
+  lay_i: &Path,
+  limit: Option<usize>,
+  status: impl Fn(&str),
+) -> Result<(), PErr> {
+  let limit_en = limit.is_some();
+  let limit = limit.unwrap_or(0);
 
   let (lay_fn, lay_ext) = lay_i
     .file_name()
@@ -104,9 +125,14 @@ fn lay_in(out_dir: &Path, lay_path: &String, status: impl Fn(&str)) -> Result<()
   let mut src = draw_prep(&src_pa)?;
 
   for (pass, sp) in leafs.enumerate() {
+    if limit_en && pass >= limit {
+      eprintln!("[I] Limit reached, proceeding to next sprite");
+      break;
+    }
 
     if sp.s.t == Overlay {
       eprintln!("[W] Overlays are unsupported, skipping");
+      continue;
     }
 
     let s = sp.s;
@@ -122,7 +148,7 @@ fn lay_in(out_dir: &Path, lay_path: &String, status: impl Fn(&str)) -> Result<()
     out.push(fmt!("{}_{}{}", sprite_name, name_suf, SRC_EXT));
 
     let dep_lst = resolve_dep_list(&dep_refs, sp)?;
-    if let Err(e) = draw_sprites(&mut src, &out, dep_lst.as_ref(), pass, &lay) {
+    if let Err(e) = draw_sprites(&mut src, &out, dep_lst.as_ref(), pass + 1, &lay) {
       print_err(e);
     }
   }

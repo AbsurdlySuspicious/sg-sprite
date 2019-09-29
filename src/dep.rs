@@ -56,7 +56,10 @@ pub fn overlays<'a, 'b>(v: &'a Vec<DepRef<'b>>) -> impl Iterator<Item = &'a DepR
 
 pub fn overlay_on_leaf<'a>(ovr: &DepRef<'a>, leaf: &DepRef<'a>) -> DepRef<'a> {
   assert_eq!(ovr.s.t, Overlay);
-  DepRef { dep_on: Some(leaf.idx), ..*ovr }
+  DepRef {
+    dep_on: Some(leaf.idx),
+    ..*ovr
+  }
 }
 
 pub fn resolve_dep_list<'a>(v: &Vec<DepRef<'a>>, src: &'a DepRef) -> Result<Vec<&'a Sprite>, PErr> {
