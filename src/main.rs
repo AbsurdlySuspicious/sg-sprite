@@ -100,8 +100,8 @@ fn lay_in(out_dir: &Path, lay_path: &String, status: impl Fn(&str)) -> Result<()
   let dep_refs = resolve_rc(&lay);
   let leafs = leaf_sprites(&dep_refs);
 
-  /*eprint!("draw: decode");
-  let mut src = draw_prep(&src_pa)?;*/
+  eprint!("draw: decode");
+  let mut src = draw_prep(&src_pa)?;
 
   for (pass, sp) in leafs.enumerate() {
     let s = sp.s;
@@ -117,9 +117,9 @@ fn lay_in(out_dir: &Path, lay_path: &String, status: impl Fn(&str)) -> Result<()
     out.push(fmt!("{}_{}{}", sprite_name, name_suf, SRC_EXT));
 
     let dep_lst = resolve_dep_list(&dep_refs, sp)?;
-    /*if let Err(e) = draw_sprites(&mut src, &out, dep_lst.as_ref(), pass, &lay) {
+    if let Err(e) = draw_sprites(&mut src, &out, dep_lst.as_ref(), pass, &lay) {
       print_err(e);
-    }*/
+    }
   }
 
   Ok(())

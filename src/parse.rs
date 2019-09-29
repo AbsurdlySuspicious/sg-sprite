@@ -110,12 +110,18 @@ pub fn parse_lay(src_f: &mut File) -> Result<ParsedLay, PErr> {
       Overlay => {
         eprintln!("[W] Overlay sprite: {}", hex::encode(head.as_ref()));
         if head[1] != 0 || head[2] != 16 {
-          eprintln!("[W] ambiguous overlay head [1..3]: 0x{}", hex::encode(&head[1..3]))
+          eprintln!(
+            "[W] ambiguous overlay head [1..3]: 0x{}",
+            hex::encode(&head[1..3])
+          )
         }
       }
       _ => {
         if head[2] != 0 {
-          eprintln!("[W] ambiguous sprite head [2]: 0x{}", hex::encode(&head[2..3]));
+          eprintln!(
+            "[W] ambiguous sprite head [2]: 0x{}",
+            hex::encode(&head[2..3])
+          );
         }
       }
     }
@@ -135,7 +141,7 @@ pub fn parse_lay(src_f: &mut File) -> Result<ParsedLay, PErr> {
   let has_base = match sprites[0].t {
     Base => true,
     Sub => false,
-    _ => return raise("first sprite isn't base or sub")
+    _ => return raise("first sprite isn't base or sub"),
   };
 
   let mut chunks: Vec<Chunk> = Vec::with_capacity(chunk_count as usize);

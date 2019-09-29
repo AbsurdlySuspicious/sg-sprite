@@ -1,5 +1,5 @@
 use crate::parse::{ParsedLay, Sprite, SpriteT::*};
-use crate::{PErr, raise};
+use crate::{raise, PErr};
 
 pub struct DepRef<'a> {
   pub s: &'a Sprite,
