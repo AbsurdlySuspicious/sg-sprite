@@ -36,6 +36,9 @@ but it should give approximate vision of the file structure.
 Prebuilts for **Windows** and **Linux** are available at 
 [Github releases](https://github.com/AbsurdlySuspicious/sg-sprite/releases)
 
+Note that this app have no gui. You should run it from console.
+Run with `--help` for details on usage
+
 ## Build
 
 Install cargo (https://www.rust-lang.org/tools/install)
