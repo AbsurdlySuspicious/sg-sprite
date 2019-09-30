@@ -31,6 +31,11 @@ but it should give approximate vision of the file structure.
 
 - Steins;Gate 0
 
+## Install
+
+Prebuilts for **Windows** and **Linux** are available at 
+[Github releases](https://github.com/AbsurdlySuspicious/sg-sprite/releases)
+
 ## Build
 
 Install cargo (https://www.rust-lang.org/tools/install)
