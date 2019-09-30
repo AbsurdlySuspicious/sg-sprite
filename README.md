@@ -10,8 +10,8 @@ Hypothetically, it should support all SciAdv series games
 on this engine (Steins;Gate Steam Edition, Steins;Gate 0, Chaos;Child, etc.), but actually it's tested
 on s;g0 resources only. Compatibility list below will be updated as soon as I'll test (and maybe fix)
 the parser for other titles. 
-If you find out that it works with non-listed games correctly, feel free to submit PR or issue,
-or patches, if they're not.
+If you find out that it works with non-listed games correctly, feel free to submit PR or issue.
+Or patches, if they're not. ¯\_(ツ)_/¯
 
 You also can read format description [here](lay-format.md). 
 It's based solely on reverse-engineering of s;g0 sprites and thus is rough and incomplete,
