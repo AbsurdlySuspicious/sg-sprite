@@ -71,7 +71,7 @@ Types:
 - `D = 0x40` - Dep sprite. Usually mouths for lipsync.
     - `A` - Sprite id.
     - `B` - Id of sub sprite which this sprite depends on.
-            Absence if sub sprite with this id implies that 
+            Absence pf sub sprite with this id implies that 
             this sprite depends directly on base or, if base
             is absent too, doesn't depends on anything.
     - `C` - `0x00`
@@ -81,14 +81,33 @@ Types:
     - `B` - `0x00`
     - `C` - `0x10` (purpose unknown)
 
-Sprites are drawn on top of each other in the dependence order:
+Shortly, dependence chain can be expressed like this:
 
-`Base -> Sub -> Dep`
+```
+`Dep(B)` -->  if `Sub` with id `B` exists,
+              depend on it  |
+      _______/              |
+     /                      |[else]
+    /                       |
+   v                        v
+`Sub`    -->  if `Base` exists,
+              depend on it  |
+       ______/              |
+      /                     |[else]
+     /                      |
+    v                       v
+`Base`   -->  draw this first
+```
 
-If sprite doesn't have any dependency, it should be drawn first.
+Sprites should be drawn in reverse-dependence order:
+
+`Base -> Sub -> Dep [-> Overlay]`
+
+Overlays are optional and usually appliable on top of any combination of sprites,
+so if certian overlay needed, it should be drawn last.
 
 Overlays must be drawn with blending (they're contains significant alpha channel).
-Other sprite types can be drawn just using byte replace.
+Other sprite types doesn't need to use blending and can be drawn over canvas using simple byte replace.
 
 # Chunk list
 
