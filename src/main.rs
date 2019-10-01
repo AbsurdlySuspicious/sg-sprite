@@ -32,6 +32,11 @@ struct Opts {
   /// .lay files to parse
   #[structopt(name = "LAY_FILES", parse(from_os_str))]
   lay_files: Vec<PathBuf>,
+
+  /// Perform parsing only to test for errors.
+  /// Do not compose actual images
+  #[structopt(long)]
+  dry_run: bool,
 }
 
 custom_error! { pub PErr
@@ -81,7 +86,7 @@ fn main_() -> Result<(), PErr> {
   let status = |c: usize| move |t: &str| println!("[{}/{}] {}", c + 1, total, t);
 
   for lay_i in &o.lay_files {
-    if let Err(e) = lay_in(&out_dir, lay_i, o.limit, status(lay_counter)) {
+    if let Err(e) = lay_in(&out_dir, lay_i, o.limit, !o.dry_run, status(lay_counter)) {
       print_err(e);
     }
 
@@ -95,6 +100,7 @@ fn lay_in(
   out_dir: &Path,
   lay_i: &Path,
   limit: Option<usize>,
+  draw_en: bool,
   status: impl Fn(&str),
 ) -> Result<(), PErr> {
   let limit_en = limit.is_some();
@@ -122,7 +128,11 @@ fn lay_in(
   let dep_refs = resolve_rc(&lay);
   let leafs = leaf_sprites(&dep_refs);
 
-  let mut src = draw_prep(&src_pa)?;
+  let mut src = if draw_en {
+    Some(draw_prep(&src_pa)?)
+  } else {
+    None
+  };
 
   for (pass, sp) in leafs.enumerate() {
     if limit_en && pass >= limit {
@@ -148,8 +158,11 @@ fn lay_in(
     out.push(fmt!("{}_{}{}", sprite_name, name_suf, SRC_EXT));
 
     let dep_lst = resolve_dep_list(&dep_refs, sp)?;
-    if let Err(e) = draw_sprites(&mut src, &out, dep_lst.as_ref(), pass + 1, &lay) {
-      print_err(e);
+
+    if let Some(src_i) = src.as_mut() {
+      if let Err(e) = draw_sprites(src_i, &out, dep_lst.as_ref(), pass + 1, &lay) {
+        print_err(e);
+      }
     }
   }
 
