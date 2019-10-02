@@ -30,6 +30,8 @@ but it should give approximate vision of the file structure.
 ## Compatibility list
 
 - Steins;Gate 0
+- Steins;Gate Steam Edition
+- Steins;Gate Linear Bounded Phenogram
 
 ## Install
 
@@ -37,7 +39,11 @@ Prebuilts for **Windows** and **Linux** are available at
 [Github releases](https://github.com/AbsurdlySuspicious/sg-sprite/releases)
 
 Note that this app have no gui. You should run it from console.
-Run with `--help` for details on usage
+Run with `--help` for details on usage.
+
+Usage example:
+
+`sg-sprite -d out *.lay`
 
 ## Build
 
