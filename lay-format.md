@@ -43,7 +43,7 @@ All these counts represents total count of corresponding entries in the whole fi
 
 # Sprite list
 
-Sprite entry (3 bytes per one):
+Sprite entry (12 bytes per one):
 
 `[32:info][u32:chunk_offset][u32:chunk_count]`
 
@@ -115,7 +115,7 @@ Other sprite types doesn't need to be blended and can be drawn over canvas using
 To draw sprites on the canvas, you should follow offset-count pair from the sprite entry above
 and draw chunks one by one.
 
-Chunk entry (4 bytes per one):
+Chunk entry (16 bytes per one):
 
 `[f32:dst_x][f32:dst_y][f32:src_x][f32:src_y]`
 
