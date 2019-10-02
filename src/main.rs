@@ -23,7 +23,7 @@ use std::path::{Path, PathBuf};
 struct Opts {
   /// Output dir
   #[structopt(short, long, parse(from_os_str))]
-  dir: PathBuf,
+  dir: Option<PathBuf>,
 
   /// Limit variants to draw per sprite
   #[structopt(short, long)]
@@ -70,10 +70,14 @@ fn main() {
 
 fn main_() -> Result<(), PErr> {
   let o = Opts::from_args();
-  let out_dir = o.dir;
+  let out_dir = &o.dir;
 
-  if !out_dir.is_dir() {
-    raise("out_dir isn't a directory")?
+  match out_dir {
+    Some(d) if !d.is_dir() => return raise("out_dir isn't a directory"),
+    None if !o.dry_run => {
+      return raise("Output dir should be specified (-d)\nSee --help for details")
+    }
+    _ => (),
   }
 
   let total = o.lay_files.len();
@@ -86,7 +90,7 @@ fn main_() -> Result<(), PErr> {
   let status = |c: usize| move |t: &str| println!("[{}/{}] {}", c + 1, total, t);
 
   for lay_i in &o.lay_files {
-    if let Err(e) = lay_in(&out_dir, lay_i, o.limit, !o.dry_run, status(lay_counter)) {
+    if let Err(e) = lay_in(out_dir, lay_i, o.limit, !o.dry_run, status(lay_counter)) {
       print_err(e);
     }
 
@@ -97,7 +101,7 @@ fn main_() -> Result<(), PErr> {
 }
 
 fn lay_in(
-  out_dir: &Path,
+  out_dir: &Option<PathBuf>,
   lay_i: &Path,
   limit: Option<usize>,
   draw_en: bool,
@@ -153,13 +157,13 @@ fn lay_in(
       SpriteT::Overlay => fmt!("o{}", s.id),
     };
 
-    let mut out = PathBuf::new();
-    out.push(&out_dir);
-    out.push(fmt!("{}_{}{}", sprite_name, name_suf, SRC_EXT));
-
     let dep_lst = resolve_dep_list(&dep_refs, sp)?;
 
     if let Some(src_i) = src.as_mut() {
+      let mut out = PathBuf::new();
+      out.push(out_dir.as_ref().unwrap());
+      out.push(fmt!("{}_{}{}", sprite_name, name_suf, SRC_EXT));
+
       if let Err(e) = draw_sprites(src_i, &out, dep_lst.as_ref(), pass + 1, &lay) {
         print_err(e);
       }
