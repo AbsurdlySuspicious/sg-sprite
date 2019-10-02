@@ -23,7 +23,7 @@ Sizes: `x00` (`u32`, `u8`, `f32`, etc)
 
 Sprite list defines variants of this sprite. They have several types and can be dependent on each other.
 
-Chunk list defines positions of chunks in the source png and their position in target sprite.
+Chunk list defines positions of chunks in the source png and their position in the target sprite.
 
 Source file chunks are 32x32px regions in the source png composed into the final sprite
 according to the needed sprite variant.
@@ -62,23 +62,24 @@ Types:
 
 - `D = 0x00` - Base sprite, always drawn first if exists
     - `A` - Sprite id. For base sprite it's usually `0x01`. 
-            Base sprite id aren't actually used anywhere and prob. can be ignored.
-    - `B, C` - `0x00` 
-- `D = 0x20` - Sub sprite. Usually different faces. 
+            Base sprite id isn't actually used anywhere and probably can be ignored.
+	    Same appliable for other sprite's ids unless stated otherwise.
+    - `B, C` - always `0x00` 
+- `D = 0x20` - Sub sprite. Usually different faces for the base sprite. 
                Implicitly depends on the base sprite if exists
-    - `A` - Sprite id. Used later for dependencies
-    - `B, C` - `0x00`
+    - `A` - Sprite id. Used later for dependencies in `Dep` sprites
+    - `B, C` - always `0x00`
 - `D = 0x40` - Dep sprite. Usually mouths for lipsync.
     - `A` - Sprite id.
     - `B` - Id of sub sprite which this sprite depends on.
-            Absence pf sub sprite with this id implies that 
+            Absence of sub sprite with this id implies that 
             this sprite depends directly on base or, if base
             is absent too, doesn't depends on anything.
-    - `C` - `0x00`
+    - `C` - always `0x00`
 - `D = 0x50` - Overlay. Should be drawn on top of anything else with blending.
                Doesn't define dependence on any other sprites, but obviously should be drawn last.
     - `A` - Sprite id.
-    - `B` - `0x00`
+    - `B` - always `0x00`
     - `C` - `0x10` (purpose unknown)
 
 Shortly, dependence chain can be expressed like this:
@@ -99,7 +100,7 @@ Shortly, dependence chain can be expressed like this:
 `Base`   -->  draw this first
 ```
 
-Sprites should be drawn in reverse-dependence order:
+Sprites should be drawn in reverse-dependence order on top of each other:
 
 `Base -> Sub -> Dep [-> Overlay]`
 
@@ -107,7 +108,7 @@ Overlays are optional and usually appliable on top of any combination of sprites
 so if certian overlay needed, it should be drawn last.
 
 Overlays must be drawn with blending (they're contains significant alpha channel).
-Other sprite types doesn't need to use blending and can be drawn over canvas using simple byte replace.
+Other sprite types doesn't need to be blended and can be drawn over canvas using simple byte replace.
 
 # Chunk list
 
