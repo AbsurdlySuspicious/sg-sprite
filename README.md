@@ -6,10 +6,8 @@ This app restores original sprites from `.png` and `.lay` files found in `chara.
 Note that this parser doesn't work with mpk files directly, you need to unpack sprites beforehand. 
 There's a good tool for this: https://github.com/rdavisau/sg-unpack
 
-Hypothetically, it should support all SciAdv series games 
-on this engine (Steins;Gate Steam Edition, Steins;Gate 0, Chaos;Child, etc.), but actually it's tested
-on s;g0 resources only. Compatibility list below will be updated as soon as I'll test (and maybe fix)
-the parser for other titles. 
+Compatible games are listed in the [compatibility list](#compatibility-list) below.
+This list will be updated as soon as I'll test (and maybe fix) the parser for other titles. 
 If you find out that it works with non-listed games correctly, feel free to submit PR or issue.
 Or patches, if they're not. ¯\_(ツ)_/¯
 
@@ -32,6 +30,7 @@ but it should give approximate vision of the file structure.
 - Steins;Gate 0
 - Steins;Gate Steam Edition
 - Steins;Gate Linear Bounded Phenogram
+- Chaos;Child
 
 ## Install
 
