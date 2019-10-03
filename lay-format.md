@@ -28,7 +28,9 @@ Chunk list defines positions of chunks in the source png and their position in t
 Source file chunks are 32x32px regions in the source png composed into the final sprite
 according to the needed sprite variant.
 
-Note: all values in the file are LE 
+Notes: 
+- In some games (Chaos;Child) lay files are compressed using zlib
+- All values in the file are LE 
 
 # Header
 
@@ -69,7 +71,7 @@ Types:
                Implicitly depends on the base sprite if exists
     - `A` - Sprite id. Used later for dependencies in `Dep` sprites
     - `B, C` - always `0x00`
-- `D = 0x40` - Dep sprite. Usually mouths for lipsync.
+- `D = 0x30 | 0x40 | 0x60` - Dep sprite. Usually mouths for lipsync.
     - `A` - Sprite id.
     - `B` - Id of sub sprite which this sprite depends on.
             Absence of sub sprite with this id implies that 
@@ -102,7 +104,7 @@ Shortly, dependence chain can be expressed like this:
 
 Sprites should be drawn in reverse-dependence order on top of each other:
 
-`Base -> Sub -> Dep [-> Overlay]`
+`Base <- Sub <- Dep [<- Overlay]`
 
 Overlays are optional and usually appliable on top of any combination of sprites,
 so if certian overlay needed, it should be drawn last.
