@@ -1,9 +1,10 @@
 use super::*;
 use byteorder::{LittleEndian, ReadBytesExt};
+use libflate::zlib;
 use std::collections::HashMap;
 use std::format as fmt;
 use std::fs::File;
-use std::io::{self, BufReader, Read};
+use std::io::{self, BufReader, Read, Seek, SeekFrom};
 use SpriteT::*;
 
 const COMMON_BUF_SZ: usize = 32;
@@ -11,6 +12,7 @@ const HEADER_SZ: usize = 4 * 2; // [u32:sprite_c][u32:chunk_c]
 const SPRITE_SZ: usize = 4 * 3; // [32][u32:chunk_offset][u32:chunk_count]
 const CHUNK_SZ: usize = 4 * 4; // [f32:img_x][f32:img_y][f32:chunk_x][f32:chunk_y]
 const SPRITE_SIZE_ADD: i32 = 32; // dangling block
+const SPRITES_MAX_RAW: u32 = 65536; // for compressed lay detection
 
 #[derive(PartialEq, Debug)]
 pub enum SpriteT {
@@ -65,8 +67,23 @@ fn read_f32_le_to_i32(src: &mut impl Read) -> Result<i32, PErr> {
 }
 
 pub fn parse_lay(src_f: &mut File) -> Result<ParsedLay, PErr> {
+  let preread = read_u32_le(src_f)?;
+  src_f.seek(SeekFrom::Start(0))?;
+
+  if preread > SPRITES_MAX_RAW {
+    eprintln!("[I] Compressed lay");
+    let buf_pre = BufReader::new(src_f);
+    let z = zlib::Decoder::new(buf_pre)?;
+    //let buf = BufReader::new(z);
+    return parse_lay_impl(z);
+  } else {
+    let buf = BufReader::new(src_f);
+    return parse_lay_impl(buf);
+  }
+}
+
+fn parse_lay_impl(mut bf: impl Read) -> Result<ParsedLay, PErr> {
   let mut c_buf = [0u8; COMMON_BUF_SZ];
-  let mut bf = BufReader::new(src_f);
 
   let sprite_count: u32;
   let chunk_count: u32;
