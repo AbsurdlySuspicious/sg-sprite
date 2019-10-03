@@ -153,7 +153,7 @@ fn lay_in(
     let name_suf = match s.t {
       SpriteT::Base => fmt!("b{}", s.id),
       SpriteT::Sub => fmt!("s{}", s.id),
-      SpriteT::Dep(d) => fmt!("d{}_{}", d, s.id),
+      SpriteT::Dep { st, dep } => fmt!("t{}_d{}_{}", st, dep, s.id),
       SpriteT::Overlay => fmt!("o{}", s.id),
     };
 

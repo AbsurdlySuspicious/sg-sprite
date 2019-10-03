@@ -31,7 +31,7 @@ pub fn resolve_rc(lay: &ParsedLay) -> Vec<DepRef> {
       Base => continue,
       Overlay => continue,
       Sub => base_dep,
-      Dep(n) => match lay.sub_map.get(&n) {
+      Dep { dep, .. } => match lay.sub_map.get(&dep) {
         Some(d) => Some(*d),
         None => base_dep,
       },

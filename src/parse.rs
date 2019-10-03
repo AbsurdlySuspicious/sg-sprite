@@ -16,10 +16,10 @@ const SPRITES_MAX_RAW: u32 = 65536; // for compressed lay detection
 
 #[derive(PartialEq, Debug)]
 pub enum SpriteT {
-  Base,    // 0x00 Base sprite
-  Sub,     // 0x20 Sub sprite (implicit dep on base)
-  Dep(u8), // 0x40 Sprite with dep on sub
-  Overlay, // 0x50 Transparent overlay
+  Base,                    // 0x00 Base sprite
+  Sub,                     // 0x20 Sub sprite (implicit dep on base)
+  Dep { st: u8, dep: u8 }, // 0x40,30,60 Sprite with dep on sub
+  Overlay,                 // 0x50 Transparent overlay
 }
 
 #[derive(Debug)]
@@ -75,10 +75,11 @@ pub fn parse_lay(src_f: &mut File) -> Result<ParsedLay, PErr> {
     let buf_pre = BufReader::new(src_f);
     let z = zlib::Decoder::new(buf_pre)?;
     //let buf = BufReader::new(z);
-    return parse_lay_impl(z);
+    parse_lay_impl(z)
   } else {
+    eprintln!("[I] Raw lay");
     let buf = BufReader::new(src_f);
-    return parse_lay_impl(buf);
+    parse_lay_impl(buf)
   }
 }
 
@@ -109,11 +110,12 @@ fn parse_lay_impl(mut bf: impl Read) -> Result<ParsedLay, PErr> {
     let mut head = [0u8; 4];
     buf.read_exact(&mut head)?;
 
+    let type_id = head[3];
     let s = Sprite {
-      t: match head[3] {
+      t: match type_id {
         0x00 => Base,
         0x20 => Sub,
-        0x40 => Dep(head[1]),
+        0x40 | 0x30 | 0x60 => Dep { st: type_id, dep: head[1] },
         0x50 => Overlay,
         _ => return raise(fmt!("wrong sprite type 0x{}", hex::encode(&head[3..4]))),
       },
@@ -125,7 +127,7 @@ fn parse_lay_impl(mut bf: impl Read) -> Result<ParsedLay, PErr> {
     // format warnings
     match s.t {
       Overlay => {
-        eprintln!("[W] Overlay sprite: {}", hex::encode(head.as_ref()));
+        //eprintln!("[W] Overlay sprite: {}", hex::encode(head.as_ref()));
         if head[1] != 0 || head[2] != 16 {
           eprintln!(
             "[W] ambiguous overlay head [1..3]: 0x{}",
@@ -173,8 +175,8 @@ fn parse_lay_impl(mut bf: impl Read) -> Result<ParsedLay, PErr> {
 
     let buf = &mut buf.as_ref();
     let mut chu = [0i32; CHUNK_SZ / 4];
-    for i in 0..(CHUNK_SZ / 4) {
-      chu[i] = read_f32_le_to_i32(buf)?;
+    for c in &mut chu {
+      *c = read_f32_le_to_i32(buf)?;
     }
 
     let (img_x, img_y) = (chu[0], chu[1]);
