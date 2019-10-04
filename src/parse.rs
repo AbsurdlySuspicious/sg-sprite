@@ -93,7 +93,7 @@ fn parse_lay_impl(mut bf: impl Read) -> Result<ParsedLay, PErr> {
     let buf = &mut c_buf[..HEADER_SZ];
     bf.read_exact(buf)?;
 
-    let buf = &mut buf.as_ref();
+    let buf = &mut &*buf;
     sprite_count = read_u32_le(buf)?;
     chunk_count = read_u32_le(buf)?;
   }
@@ -106,7 +106,7 @@ fn parse_lay_impl(mut bf: impl Read) -> Result<ParsedLay, PErr> {
     let buf = &mut c_buf[..SPRITE_SZ];
     bf.read_exact(buf)?;
 
-    let buf = &mut buf.as_ref();
+    let buf = &mut &*buf;
     let mut head = [0u8; 4];
     buf.read_exact(&mut head)?;
 
@@ -173,7 +173,7 @@ fn parse_lay_impl(mut bf: impl Read) -> Result<ParsedLay, PErr> {
     let buf = &mut c_buf[..CHUNK_SZ];
     bf.read_exact(buf)?;
 
-    let buf = &mut buf.as_ref();
+    let buf = &mut &*buf;
     let mut chu = [0i32; CHUNK_SZ / 4];
     for c in &mut chu {
       *c = read_f32_le_to_i32(buf)?;

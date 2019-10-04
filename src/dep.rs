@@ -46,11 +46,11 @@ pub fn resolve_rc(lay: &ParsedLay) -> Vec<DepRef> {
   lst
 }
 
-pub fn leaf_sprites<'a, 'b>(v: &'a Vec<DepRef<'b>>) -> impl Iterator<Item = &'a DepRef<'b>> {
+pub fn leaf_sprites<'a, 'b>(v: &'a [DepRef<'b>]) -> impl Iterator<Item = &'a DepRef<'b>> {
   v.iter().filter(|d| d.rc == 0 /*&& d.s.t != Overlay*/)
 }
 
-pub fn overlays<'a, 'b>(v: &'a Vec<DepRef<'b>>) -> impl Iterator<Item = &'a DepRef<'b>> {
+pub fn overlays<'a, 'b>(v: &'a [DepRef<'b>]) -> impl Iterator<Item = &'a DepRef<'b>> {
   v.iter().filter(|d| d.s.t == Overlay)
 }
 
@@ -62,7 +62,7 @@ pub fn overlay_on_leaf<'a>(ovr: &DepRef<'a>, leaf: &DepRef<'a>) -> DepRef<'a> {
   }
 }
 
-pub fn resolve_dep_list<'a>(v: &Vec<DepRef<'a>>, src: &'a DepRef) -> Result<Vec<&'a Sprite>, PErr> {
+pub fn resolve_dep_list<'a>(v: &[DepRef<'a>], src: &'a DepRef) -> Result<Vec<&'a Sprite>, PErr> {
   let v_ln = v.len();
   let mut dep_q: Vec<&Sprite> = Vec::with_capacity(3);
 

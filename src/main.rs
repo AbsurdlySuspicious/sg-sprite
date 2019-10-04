@@ -70,6 +70,7 @@ fn main() {
 
 fn main_() -> Result<(), PErr> {
   let o = Opts::from_args();
+  let layouts = &o.lay_files;
   let out_dir = &o.dir;
 
   match out_dir {
@@ -81,7 +82,6 @@ fn main_() -> Result<(), PErr> {
   }
 
   let total = o.lay_files.len();
-  let mut lay_counter = 0usize;
 
   if total == 0 {
     return raise("no .lay files provided");
@@ -89,12 +89,10 @@ fn main_() -> Result<(), PErr> {
 
   let status = |c: usize| move |t: &str| println!("[{}/{}] {}", c + 1, total, t);
 
-  for lay_i in &o.lay_files {
-    if let Err(e) = lay_in(out_dir, lay_i, o.limit, !o.dry_run, status(lay_counter)) {
+  for i in 0..layouts.len() {
+    if let Err(e) = lay_in(out_dir, &layouts[i], o.limit, !o.dry_run, status(i)) {
       print_err(e);
     }
-
-    lay_counter += 1;
   }
 
   Ok(())
@@ -114,13 +112,13 @@ fn lay_in(
     .file_name()
     .and_then(|n| n.to_str())
     .and_then(|f| LAY_EXT.iter().find(|e| f.ends_with(**e)).map(|e| (f, e)))
-    .ok_or(raise_e("not a lay file"))?;
+    .ok_or_else(|| raise_e("not a lay file"))?;
 
   let sprite_name = lay_fn.trim_end_matches(lay_ext);
   let src_fn = fmt!("{}{}", sprite_name, SRC_EXT);
   let src_pa: PathBuf = {
     let mut pb = PathBuf::new();
-    let p = lay_i.parent().ok_or(raise_e("no parent"))?;
+    let p = lay_i.parent().ok_or_else(|| raise_e("no parent"))?;
     pb.push(p);
     pb.push(src_fn);
     pb
