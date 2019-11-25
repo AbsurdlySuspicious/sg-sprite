@@ -4,7 +4,7 @@ version = "0.2.1"
 authors = ["mfgm2"]
 edition = "2018"
 
-description = "Application for restoring Mages engine sprites (Steins;Gate, Steins;Gate 0, Chaos;Child)""
+description = "Application for restoring Mages engine sprites (Steins;Gate, Steins;Gate 0, Chaos;Child)"
 license = "Apache-2.0"
 repository = "https://github.com/AbsurdlySuspicious/sg-sprite"
 keywords = ["visual-novel", "games", "binary-format", "unpacker", "decoder"]
