@@ -23,7 +23,7 @@ pub struct DrawPrep {
 
 pub fn draw_prep(img: &Path) -> Result<DrawPrep, PErr> {
   let img = if ENABLE_DRAWING {
-    eprint!("draw: decode ({})", img.display());
+    eprint!("draw: decode");
     image::open(img)?
   } else {
     DynamicImage::new_rgba8(0, 0)
