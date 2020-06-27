@@ -9,7 +9,7 @@ There's a good tool for this: https://github.com/rdavisau/sg-unpack
 Compatible games are listed in the [compatibility list](#compatibility-list) below.
 This list will be updated as soon as I'll test (and maybe fix) the parser for other titles. 
 If you find out that it works with non-listed games correctly, feel free to submit PR or issue.
-Or patches, if they're not. ¯\_(ツ)_/¯
+Or patches, if they're not. ¯\\_(ツ)_/¯
 
 You also can read format description [here](lay-format.md). 
 It's based solely on reverse-engineering of s;g0 sprites and thus is rough and incomplete,
