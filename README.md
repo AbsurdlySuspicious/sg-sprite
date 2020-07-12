@@ -30,6 +30,7 @@ but it should give approximate vision of the file structure.
 - Steins;Gate 0
 - Steins;Gate Steam Edition
 - Steins;Gate Linear Bounded Phenogram
+- Steins;Gate My Darling's Embrace
 - Chaos;Child
 
 ## Install
