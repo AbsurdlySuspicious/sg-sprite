@@ -15,6 +15,23 @@ You also can read format description [here](lay-format.md).
 It's based solely on reverse-engineering of s;g0 sprites and thus is rough and incomplete,
 but it should give approximate vision of the file structure. 
 
+## FAQ
+
+- My archive has .cpk extension. How do I unpack it?
+- Use [arc_unpacker project](https://github.com/vn-tools/arc_unpacker):
+  `arc_unpacker --dec=cri/cpk --no-recurse chara.cpk`
+
++ After unpacking chara archive I see `.gxt` files instead of `.png`
++ GXT is a PS Vita texture format. Convert them into png before using sg-sprite
+  with this tool: [Scarlet Project](https://github.com/xdanieldzd/Scarlet).  
+  Converted PNGs will have ` (Image 0)` suffix but starting from 0.2.3
+  sg-sprite will pick them up nevertheless so you don't need to rename them
+  to match `.lay` files names.  
+  Resulting sprites may have glitchy background in this case and I suspect
+  this is a gxt-to-png conversion issue (you can confirm it if you look into
+  one of converted/source PNGs). Let me know if there is any
+  better maintained converter so I can replace the link.
+
 ## Missing functionality
 
 - Doesn't draw overlays. 
@@ -32,6 +49,10 @@ but it should give approximate vision of the file structure.
 - Steins;Gate Linear Bounded Phenogram
 - Steins;Gate My Darling's Embrace
 - Chaos;Child
+
+### Non-SciAdv novels
+
+- Yahari Game Demo Ore no Seishun Love-Kome wa Machigatteiru. Zoku
 
 ## Install
 
