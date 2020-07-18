@@ -4,7 +4,7 @@ use custom_error::custom_error;
 use std::env;
 use std::fmt::Display;
 use std::format as fmt;
-use std::fs::File;
+use std::fs::{File, DirEntry};
 use std::io;
 use structopt::StructOpt;
 
@@ -60,7 +60,6 @@ fn print_err(e: impl Display) {
 }
 
 const LAY_EXT: &[&str] = &["_.lay", ".lay"];
-const SRC_EXT: &str = ".png";
 
 fn main() {
   if let Err(e) = main_() {
@@ -90,8 +89,10 @@ fn main_() -> Result<(), PErr> {
   let status = |c: usize| move |t: &str| println!("[{}/{}] {}", c + 1, total, t);
 
   for i in 0..layouts.len() {
-    if let Err(e) = lay_in(out_dir, &layouts[i], o.limit, !o.dry_run, status(i)) {
+    let lay_path = &layouts[i];
+    if let Err(e) = lay_in(out_dir, lay_path, o.limit, !o.dry_run, status(i)) {
       print_err(e);
+      print_err(format_args!("({})", lay_path.display()));
     }
   }
 
@@ -108,20 +109,33 @@ fn lay_in(
   let limit_en = limit.is_some();
   let limit = limit.unwrap_or(0);
 
-  let (lay_fn, lay_ext) = lay_i
+  let (lay_filename, lay_ext) = lay_i
     .file_name()
     .and_then(|n| n.to_str())
     .and_then(|f| LAY_EXT.iter().find(|e| f.ends_with(**e)).map(|e| (f, e)))
     .ok_or_else(|| raise_e("not a lay file"))?;
 
-  let sprite_name = lay_fn.trim_end_matches(lay_ext);
-  let src_fn = fmt!("{}{}", sprite_name, SRC_EXT);
-  let src_pa: PathBuf = {
-    let mut pb = PathBuf::new();
-    let p = lay_i.parent().ok_or_else(|| raise_e("no parent"))?;
-    pb.push(p);
-    pb.push(src_fn);
-    pb
+  let sprite_name =
+      lay_filename.trim_end_matches(lay_ext);
+
+  let source_pic_path: PathBuf = {
+    let mut path_buf = lay_i.canonicalize().expect("Can't canonicalize .lay path");
+    let parent_dir = path_buf.parent().expect("No parent dir");
+    // bail out right away if there are problems with path resolution
+
+    let source_filename = parent_dir.read_dir()
+        .unwrap()
+        .flatten()
+        .find(|f|
+            f.file_name().to_str()
+                .map(|n| n.starts_with(sprite_name) && n.ends_with(".png"))
+                .unwrap_or(false)
+        )
+        .ok_or_else(|| raise_e("No corresponding png file"))?;
+
+    path_buf.pop();
+    path_buf.push(source_filename.file_name());
+    path_buf
   };
 
   status(sprite_name);
@@ -130,8 +144,11 @@ fn lay_in(
   let dep_refs = resolve_rc(&lay);
   let leafs = leaf_sprites(&dep_refs);
 
+  println!("[I] Using source file: {}",
+           source_pic_path.file_name().unwrap().to_str().unwrap_or("???"));
+
   let mut src = if draw_en {
-    Some(draw_prep(&src_pa)?)
+    Some(draw_prep(&source_pic_path)?)
   } else {
     None
   };
@@ -160,7 +177,7 @@ fn lay_in(
     if let Some(src_i) = src.as_mut() {
       let mut out = PathBuf::new();
       out.push(out_dir.as_ref().unwrap());
-      out.push(fmt!("{}_{}{}", sprite_name, name_suf, SRC_EXT));
+      out.push(fmt!("{}_{}.png", sprite_name, name_suf));
 
       if let Err(e) = draw_sprites(src_i, &out, dep_lst.as_ref(), pass + 1, &lay) {
         print_err(e);
