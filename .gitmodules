@@ -1,0 +1,3 @@
+[submodule "tests/repo"]
+  path = tests/repo
+  url = https://github.com/AbsurdlySuspicious/sg-sprite-test-files.git
