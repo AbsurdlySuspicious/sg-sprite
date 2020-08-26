@@ -23,20 +23,20 @@ use std::path::{Path, PathBuf};
 pub struct Opts {
     /// Output dir
     #[structopt(short, long, parse(from_os_str))]
-    dir: Option<PathBuf>,
+    pub dir: Option<PathBuf>,
 
     /// Limit variants to draw per sprite
     #[structopt(short, long)]
-    limit: Option<usize>,
+    pub limit: Option<usize>,
 
     /// .lay files to parse
     #[structopt(name = "LAY_FILES", parse(from_os_str))]
-    lay_files: Vec<PathBuf>,
+    pub lay_files: Vec<PathBuf>,
 
     /// Perform parsing only to test for errors.
     /// Do not compose actual images
     #[structopt(long)]
-    dry_run: bool,
+    pub dry_run: bool,
 }
 
 custom_error! { pub PErr
@@ -61,7 +61,7 @@ pub fn print_err(e: impl Display) {
 
 const LAY_EXT: &[&str] = &["_.lay", ".lay"];
 
-pub fn lib_main(o: Opts) -> Result<(), PErr> {
+pub fn lib_main(o: &Opts) -> Result<(), PErr> {
     let layouts = &o.lay_files;
     let out_dir = &o.dir;
 
