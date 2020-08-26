@@ -112,8 +112,8 @@ fn lay_in(
     status_cb(sprite_name);
 
     let lay = parse_lay(&mut File::open(lay_file)?)?;
-    let dep_refs = resolve_rc(&lay);
-    let leaves = leaf_sprites(&dep_refs);
+    let graph = DepGraph::resolve_dep_graph(&lay);
+    let leaves = graph.get_leaf_sprites();
 
     if let Some(out_dir) = out_dir {
         let src_image_path: PathBuf = {
@@ -147,12 +147,12 @@ fn lay_in(
                 break;
             }
 
-            if sp.s.sprite_type == SpriteT::Overlay {
+            if sp.sprite.sprite_type == SpriteT::Overlay {
                 eprintln!("[W] Overlays are unsupported, skipping");
                 continue;
             }
 
-            let s = sp.s;
+            let s = sp.sprite;
             let name_suf = lazy_format!(match (s.sprite_type) {
                 SpriteT::Base => ("b{}", s.id),
                 SpriteT::Sub => ("s{}", s.id),
@@ -160,18 +160,17 @@ fn lay_in(
                 SpriteT::Dep { exact_type: st, depends_on: dep } => ("t{}_d{}_{}", st, dep, s.id),
             });
 
-            let dep_lst = resolve_dep_list(&dep_refs, sp)?;
+            let layers = graph.resolve_layers(sp)?;
+            let mut out_path = out_dir.as_ref().to_path_buf();
+            out_path.push(fmt!("{}_{}.png", sprite_name, name_suf));
 
-            let mut out = out_dir.as_ref().to_path_buf();
-            out.push(fmt!("{}_{}.png", sprite_name, name_suf));
-
-            if let Err(e) = draw_sprites(&mut src_image, &out, dep_lst.as_ref(), pass + 1, &lay) {
+            if let Err(e) = draw_sprites(&mut src_image, &out_path, layers.as_ref(), pass + 1, &lay) {
                 print_err(e);
             }
         }
     } else {
         for sp in leaves {
-            resolve_dep_list(&dep_refs, sp)?; // validation resolve for --dry-run
+            graph.resolve_layers(sp)?; // validation resolve for --dry-run
         }
     }
 

@@ -1,79 +1,63 @@
 use crate::parse::{ParsedLay, Sprite, SpriteT};
 use crate::{raise, PErr};
 
-pub struct DepRef<'a> {
-    pub idx: usize,
-    pub s: &'a Sprite,
-    pub rc: usize,
-    pub dep_on: Option<usize>,
+pub struct DepNode<'a> {
+    pub sprite: &'a Sprite,
+    pub ref_count: usize,
+    pub depends_on: Option<usize>,
 }
 
-pub fn resolve_rc(lay: &ParsedLay) -> Vec<DepRef> {
-    let base_dep = lay.base_dep;
-    let mut lst: Vec<_> = lay
-        .sprites
-        .iter()
-        .enumerate()
-        .map(|(i, s)| DepRef {
-            s,
-            idx: i,
-            rc: 0,
-            dep_on: None,
-        })
-        .collect();
+pub struct DepGraph<'a>(Vec<DepNode<'a>>);
 
-    // Dep: depend on Base/first sprite
-    //      implicitly if parent is absent
+fn node(s: &Sprite) -> DepNode {
+    DepNode { sprite: s, ref_count: 0, depends_on: None }
+}
 
-    for dr_i in 0..lst.len() {
-        let dr = &mut lst[dr_i];
-        let dep_i = match dr.s.sprite_type {
-            SpriteT::Base => continue,
-            SpriteT::Overlay => continue,
-            SpriteT::Sub => base_dep,
-            SpriteT::Dep { depends_on: dep, .. } => match lay.sub_map.get(&dep) {
-                Some(d) => Some(*d),
-                None => base_dep,
-            },
-        };
+impl<'g> DepGraph<'g> {
+    pub fn resolve_dep_graph(lay: &ParsedLay) -> DepGraph {
+        let base_dep = lay.base_dep;
+        let mut node_list: Vec<_> = lay.sprites.iter().map(node).collect();
 
-        if let Some(i) = dep_i {
-            dr.dep_on = dep_i;
-            lst[i].rc += 1;
+        // Dep: depend on Base/first sprite
+        //      implicitly if parent is absent
+
+        for i in 0..node_list.len() {
+            let n = &mut node_list[i]; // No way to modify other nodes while iterator is borrowed
+            let dep_idx = match n.sprite.sprite_type {
+                SpriteT::Base | SpriteT::Overlay => continue,
+                SpriteT::Sub => base_dep,
+                SpriteT::Dep { depends_on: dep, .. } => match lay.sub_map.get(&dep) {
+                    Some(d) => Some(*d),
+                    None => base_dep,
+                },
+            };
+
+            if let Some(i) = dep_idx {
+                n.depends_on = dep_idx;
+                node_list[i].ref_count += 1;
+            }
         }
+
+        DepGraph(node_list)
     }
 
-    lst
-}
-
-pub fn leaf_sprites<'a, 'b>(v: &'a [DepRef<'b>]) -> impl Iterator<Item = &'a DepRef<'b>> {
-    v.iter().filter(|d| d.rc == 0 /*&& d.s.t != SpriteT::Overlay*/)
-}
-
-pub fn overlays<'a, 'b>(v: &'a [DepRef<'b>]) -> impl Iterator<Item = &'a DepRef<'b>> {
-    v.iter().filter(|d| d.s.sprite_type == SpriteT::Overlay)
-}
-
-pub fn overlay_on_leaf<'a>(ovr: &DepRef<'a>, leaf: &DepRef<'a>) -> DepRef<'a> {
-    assert_eq!(ovr.s.sprite_type, SpriteT::Overlay);
-    DepRef {
-        dep_on: Some(leaf.idx),
-        ..*ovr
+    pub fn get_leaf_sprites<'a>(&'a self) -> impl Iterator<Item = &'a DepNode<'g>> {
+        self.0.iter().filter(|d| d.ref_count == 0)
     }
-}
 
-pub fn resolve_dep_list<'a>(v: &[DepRef<'a>], src: &'a DepRef) -> Result<Vec<&'a Sprite>, PErr> {
-    let v_ln = v.len();
-    let mut dep_q: Vec<&Sprite> = Vec::with_capacity(3);
+    pub fn resolve_layers(&self, leaf: &'g DepNode) -> Result<Vec<&'g Sprite>, PErr> {
+        let node_count = self.0.len();
+        let mut layers: Vec<&Sprite> = Vec::with_capacity(3);
 
-    let mut next = Some(src);
-    while let Some(s) = next {
-        dep_q.push(s.s);
-        next = s.dep_on.map(|d| &v[d]);
-        if dep_q.len() > v_ln {
-            return raise("dep-list resolve looped");
+        let mut next = Some(leaf);
+        while let Some(s) = next {
+            layers.push(s.sprite);
+            next = s.depends_on.map(|d| &self.0[d]);
+            if layers.len() > node_count {
+                return raise("sprite layer list resolve looped");
+            }
         }
-    }
 
-    Ok(dep_q)
+        Ok(layers)
+    }
 }

@@ -18,7 +18,7 @@ pub enum SpriteT {
     Base,                    // 0x00 Base sprite / layer 0
     Sub,                     // 0x20 Sub sprite (implicitly depends on Base)
     Dep {                    // 0x40 0x30 0x60 Sprite with dependency on Sub
-    exact_type: u8,
+        exact_type: u8,
         depends_on: u8
     },
     Overlay,                 // 0x50 Transparent overlay
