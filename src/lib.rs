@@ -1,9 +1,11 @@
 #![allow(dead_code, unused_imports)]
 
 use custom_error::custom_error;
+use lazy_format::lazy_format;
 use std::env;
 use std::fmt::Display;
 use std::format as fmt;
+use std::path::{Path, PathBuf};
 use std::fs::{File, DirEntry};
 use std::io;
 use structopt::StructOpt;
@@ -12,11 +14,9 @@ mod dep;
 mod draw;
 mod parse;
 
-use crate::parse::SpriteT::Overlay;
 use dep::*;
 use draw::*;
 use parse::*;
-use std::path::{Path, PathBuf};
 
 #[derive(StructOpt, Debug)]
 #[structopt()]
@@ -63,12 +63,12 @@ const LAY_EXT: &[&str] = &["_.lay", ".lay"];
 
 pub fn lib_main(o: &Opts) -> Result<(), PErr> {
     let layouts = &o.lay_files;
-    let out_dir = &o.dir;
+    let out_dir = o.dir.as_ref();
 
     match out_dir {
         Some(d) if !d.is_dir() => return raise("out_dir isn't a directory"),
         None if !o.dry_run => {
-            return raise("Output dir should be specified (-d)\nSee --help for details")
+            return raise("Output dir should be specified (-d)\nSee --help for details");
         }
         _ => (),
     }
@@ -83,7 +83,7 @@ pub fn lib_main(o: &Opts) -> Result<(), PErr> {
 
     for i in 0..layouts.len() {
         let lay_path = &layouts[i];
-        if let Err(e) = lay_in(out_dir, lay_path, o.limit, !o.dry_run, status(i)) {
+        if let Err(e) = lay_in(out_dir, lay_path, o.limit, status(i)) {
             print_err(e);
             print_err(format_args!("({})", lay_path.display()));
         }
@@ -93,16 +93,14 @@ pub fn lib_main(o: &Opts) -> Result<(), PErr> {
 }
 
 fn lay_in(
-    out_dir: &Option<PathBuf>,
-    lay_i: &Path,
+    out_dir: Option<impl AsRef<Path>>,
+    lay_file: &Path,
     limit: Option<usize>,
-    draw_en: bool,
-    status: impl Fn(&str),
+    status_cb: impl Fn(&str),
 ) -> Result<(), PErr> {
-    let limit_en = limit.is_some();
     let limit = limit.unwrap_or(0);
 
-    let (lay_filename, lay_ext) = lay_i
+    let (lay_filename, lay_ext) = lay_file
         .file_name()
         .and_then(|n| n.to_str())
         .and_then(|f| LAY_EXT.iter().find(|e| f.ends_with(**e)).map(|e| (f, e)))
@@ -111,70 +109,69 @@ fn lay_in(
     let sprite_name =
         lay_filename.trim_end_matches(lay_ext);
 
-    let source_pic_path: PathBuf = {
-        let mut path_buf = lay_i.canonicalize().expect("Can't canonicalize .lay path");
-        let parent_dir = path_buf.parent().expect("No parent dir");
-        // bail out right away if there are problems with path resolution
+    status_cb(sprite_name);
 
-        let source_filename = parent_dir.read_dir()
-            .unwrap()
-            .flatten()
-            .find(|f|
-                f.file_name().to_str()
-                    .map(|n| n.starts_with(sprite_name) && n.ends_with(".png"))
-                    .unwrap_or(false)
-            )
-            .ok_or_else(|| raise_e("No corresponding png file"))?;
-
-        path_buf.pop();
-        path_buf.push(source_filename.file_name());
-        path_buf
-    };
-
-    status(sprite_name);
-
-    let lay = parse_lay(&mut File::open(lay_i)?)?;
+    let lay = parse_lay(&mut File::open(lay_file)?)?;
     let dep_refs = resolve_rc(&lay);
-    let leafs = leaf_sprites(&dep_refs);
+    let leaves = leaf_sprites(&dep_refs);
 
-    println!("[I] Using source file: {}",
-             source_pic_path.file_name().unwrap().to_str().unwrap_or("???"));
+    if let Some(out_dir) = out_dir {
+        let src_image_path: PathBuf = {
+            let mut path_buf = lay_file.canonicalize().expect("Can't canonicalize .lay path");
+            let parent_dir = path_buf.parent().expect("No parent dir");
+            // bail out right away if there are problems with path resolution
 
-    let mut src = if draw_en {
-        Some(draw_prep(&source_pic_path)?)
-    } else {
-        None
-    };
+            let src_filename = parent_dir.read_dir()
+                .unwrap()
+                .flatten()
+                .find(|f|
+                    f.file_name().to_str()
+                        .map(|n| n.starts_with(sprite_name) && n.ends_with(".png"))
+                        .unwrap_or(false)
+                )
+                .ok_or_else(|| raise_e("No corresponding png file"))?;
 
-    for (pass, sp) in leafs.enumerate() {
-        if limit_en && pass >= limit {
-            eprintln!("[I] Limit reached, proceeding to next sprite");
-            break;
-        }
-
-        if sp.s.t == Overlay {
-            eprintln!("[W] Overlays are unsupported, skipping");
-            continue;
-        }
-
-        let s = sp.s;
-        let name_suf = match s.t {
-            SpriteT::Base => fmt!("b{}", s.id),
-            SpriteT::Sub => fmt!("s{}", s.id),
-            SpriteT::Dep { st, dep } => fmt!("t{}_d{}_{}", st, dep, s.id),
-            SpriteT::Overlay => fmt!("o{}", s.id),
+            path_buf.pop();
+            path_buf.push(src_filename.file_name());
+            path_buf
         };
 
-        let dep_lst = resolve_dep_list(&dep_refs, sp)?;
+        println!("[I] Using source file: {}",
+                 src_image_path.file_name().unwrap().to_str().unwrap_or("???"));
 
-        if let Some(src_i) = src.as_mut() {
-            let mut out = PathBuf::new();
-            out.push(out_dir.as_ref().unwrap());
+        let mut src_image = draw_prep(&src_image_path)?;
+
+        for (pass, sp) in leaves.enumerate() {
+            if limit > 0 && pass >= limit {
+                eprintln!("[I] Limit reached, proceeding to next sprite");
+                break;
+            }
+
+            if sp.s.sprite_type == SpriteT::Overlay {
+                eprintln!("[W] Overlays are unsupported, skipping");
+                continue;
+            }
+
+            let s = sp.s;
+            let name_suf = lazy_format!(match (s.sprite_type) {
+                SpriteT::Base => ("b{}", s.id),
+                SpriteT::Sub => ("s{}", s.id),
+                SpriteT::Overlay => ("o{}", s.id),
+                SpriteT::Dep { exact_type: st, depends_on: dep } => ("t{}_d{}_{}", st, dep, s.id),
+            });
+
+            let dep_lst = resolve_dep_list(&dep_refs, sp)?;
+
+            let mut out = out_dir.as_ref().to_path_buf();
             out.push(fmt!("{}_{}.png", sprite_name, name_suf));
 
-            if let Err(e) = draw_sprites(src_i, &out, dep_lst.as_ref(), pass + 1, &lay) {
+            if let Err(e) = draw_sprites(&mut src_image, &out, dep_lst.as_ref(), pass + 1, &lay) {
                 print_err(e);
             }
+        }
+    } else {
+        for sp in leaves {
+            resolve_dep_list(&dep_refs, sp)?; // validation resolve for --dry-run
         }
     }
 

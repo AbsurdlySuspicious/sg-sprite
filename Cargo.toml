@@ -11,6 +11,7 @@ keywords = ["visual-novel", "games", "binary-format", "unpacker", "decoder"]
 readme = "README.md"
 
 [dependencies]
+lazy_format = "1.8"
 libflate = "0.1.0"
 custom_error = "1.7"
 structopt = "0.3.0"

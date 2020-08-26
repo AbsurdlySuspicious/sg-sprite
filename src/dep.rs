@@ -1,4 +1,4 @@
-use crate::parse::{ParsedLay, Sprite, SpriteT::*};
+use crate::parse::{ParsedLay, Sprite, SpriteT};
 use crate::{raise, PErr};
 
 pub struct DepRef<'a> {
@@ -27,11 +27,11 @@ pub fn resolve_rc(lay: &ParsedLay) -> Vec<DepRef> {
 
   for dr_i in 0..lst.len() {
     let dr = &mut lst[dr_i];
-    let dep_i = match dr.s.t {
-      Base => continue,
-      Overlay => continue,
-      Sub => base_dep,
-      Dep { dep, .. } => match lay.sub_map.get(&dep) {
+    let dep_i = match dr.s.sprite_type {
+      SpriteT::Base => continue,
+      SpriteT::Overlay => continue,
+      SpriteT::Sub => base_dep,
+      SpriteT::Dep { depends_on: dep, .. } => match lay.sub_map.get(&dep) {
         Some(d) => Some(*d),
         None => base_dep,
       },
@@ -47,15 +47,15 @@ pub fn resolve_rc(lay: &ParsedLay) -> Vec<DepRef> {
 }
 
 pub fn leaf_sprites<'a, 'b>(v: &'a [DepRef<'b>]) -> impl Iterator<Item = &'a DepRef<'b>> {
-  v.iter().filter(|d| d.rc == 0 /*&& d.s.t != Overlay*/)
+  v.iter().filter(|d| d.rc == 0 /*&& d.s.t != SpriteT::Overlay*/)
 }
 
 pub fn overlays<'a, 'b>(v: &'a [DepRef<'b>]) -> impl Iterator<Item = &'a DepRef<'b>> {
-  v.iter().filter(|d| d.s.t == Overlay)
+  v.iter().filter(|d| d.s.sprite_type == SpriteT::Overlay)
 }
 
 pub fn overlay_on_leaf<'a>(ovr: &DepRef<'a>, leaf: &DepRef<'a>) -> DepRef<'a> {
-  assert_eq!(ovr.s.t, Overlay);
+  assert_eq!(ovr.s.sprite_type, SpriteT::Overlay);
   DepRef {
     dep_on: Some(leaf.idx),
     ..*ovr
