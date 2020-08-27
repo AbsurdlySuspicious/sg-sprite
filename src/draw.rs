@@ -51,7 +51,7 @@ pub fn draw_sprites(
         let chunks = &lay.chunks[s.chunk_offset..][..s.chunk_count];
 
         for c in chunks.iter() {
-            status!("{} chunks", chunk_count);
+            status!("{} chunks", chunk_count + 1);
 
             let (cx, cy) = ((x_mid + c.img_x) as u32, (y_mid + c.img_y) as u32);
             let (sx, sy) = (c.chunk_x as u32 - 1, c.chunk_y as u32 - 1);

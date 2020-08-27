@@ -135,11 +135,6 @@ fn lay_in(
                 break;
             }
 
-            if sp.sprite.sprite_type == SpriteT::Overlay {
-                eprintln!("[W] Overlays are unsupported, skipping");
-                continue;
-            }
-
             let s = sp.sprite;
             let name_suf = lazy_format!(match (s.sprite_type) {
                 SpriteT::Base => ("b{}", s.id),

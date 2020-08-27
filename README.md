@@ -17,30 +17,27 @@ but it should give approximate vision of the file structure.
 
 ## FAQ
 
-- My archive has .cpk extension. How do I unpack it?
-- Use [arc_unpacker project](https://github.com/vn-tools/arc_unpacker):
-  `arc_unpacker --dec=cri/cpk --no-recurse chara.cpk`
-
-+ After unpacking chara archive I see `.gxt` files instead of `.png`
-+ GXT is a PS Vita texture format. Convert them into png before using sg-sprite
-  with this tool: [Scarlet Project](https://github.com/xdanieldzd/Scarlet).  
-  Converted PNGs will have ` (Image 0)` suffix but starting from 0.2.3
-  sg-sprite will pick them up nevertheless so you don't need to rename them
-  to match `.lay` files names.  
-  Resulting sprites may have glitchy background in this case and I suspect
-  this is a gxt-to-png conversion issue (you can confirm it if you look into
-  one of converted/source PNGs). Let me know if there is any
-  better maintained converter so I can replace the link.
-
-## Missing functionality
-
-- Doesn't draw overlays. 
-  They're not very common, in the s;g0 at least.
-  I'm not sure how to output them:
-  Drawing each overlay on all suitable sprite variants
-  will dramatically increase the count of output pngs, so
-  I've just decided to not implement it until I'll come up
-  with better solution.
+-
+    - **Q:** My archive has .cpk extension. How do I unpack it?
+    - **A:** Use [arc_unpacker project](https://github.com/vn-tools/arc_unpacker):
+      `arc_unpacker --dec=cri/cpk --no-recurse chara.cpk`
+-
+    - **Q:** After unpacking chara archive I see `.gxt` files instead of `.png`
+    - **A:** GXT is a PS Vita texture format. Convert them into png before using sg-sprite
+      with this tool: [Scarlet Project](https://github.com/xdanieldzd/Scarlet).  
+      Converted PNGs will have ` (Image 0)` suffix but starting from 0.2.3
+      sg-sprite will pick them up nevertheless so you don't need to rename them
+      to match `.lay` files names.  
+      Resulting sprites may have glitchy background in this case and I suspect
+      this is a gxt-to-png conversion issue (you can confirm it if you look into
+      one of converted/source PNGs). Let me know if there is any
+      better maintained converter so I can replace the link.
+-
+    - **Q:** I see some transparent PNGs with `_oX` suffix in output folder. What are these?
+    - **A:** These are overlays. They are intended to be drawn on top of the sprite, 
+      you can do this yourself in your favorite photo editor (e.g. GIMP). 
+      They should be compatible with most of the sprites in file. Also, they have
+      same size as original sprite, so you don't need to do any manual positioning.
   
 ## Compatibility list
 

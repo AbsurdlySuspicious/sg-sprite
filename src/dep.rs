@@ -47,6 +47,10 @@ impl<'g> DepGraph<'g> {
     }
 
     pub fn resolve_layers(&self, leaf: &'g DepNode) -> Result<Vec<&'g Sprite>, SgSpriteErr> {
+        if leaf.sprite.sprite_type == SpriteT::Overlay {
+            return Ok(vec![leaf.sprite]); // draw only overlay itself
+        }
+
         let node_count = self.0.len();
         let mut layers: Vec<&Sprite> = Vec::with_capacity(3);
 
