@@ -4,7 +4,6 @@ use image::{
     self, imageops, DynamicImage, GenericImage, GenericImageView, ImageBuffer, Pixels, Rgba,
     RgbaImage,
 };
-use parse::*;
 use std::format as fmt;
 use std::fs::File;
 use std::io::{BufReader, Read};

@@ -118,7 +118,7 @@ fn parse_lay_impl(mut bf: impl Read) -> Result<ParsedLay, PErr> {
                 0x20 => SpriteT::Sub,
                 0x40 | 0x30 | 0x60 => SpriteT::Dep { exact_type: type_id, depends_on: head[1] },
                 0x50 => SpriteT::Overlay,
-                _ => return raise(fmt!("wrong sprite type 0x{}", hex::encode(&head[3..4]))),
+                _ => return raise(fmt!("Unknown sprite type {:#X}", Hex(&head[3..4]))),
             },
             id: head[0],
             chunk_offset: read_u32_le(buf)? as usize,
@@ -131,10 +131,10 @@ fn parse_lay_impl(mut bf: impl Read) -> Result<ParsedLay, PErr> {
                 sub_map.insert(s.id, sprites.len());
             }
             SpriteT::Overlay => if head[1] != 0 || head[2] != 16 {
-                eprintln!("[W] ambiguous overlay head [1..3]: 0x{}", hex::encode(&head[1..3]));
+                eprintln!("[W] Ambiguous overlay head [1..3]: {:#X}", Hex(&head[1..3]));
             }
             _ => if head[2] != 0 {
-                eprintln!("[W] ambiguous sprite head [2]: 0x{}", hex::encode(&head[2..3]));
+                eprintln!("[W] Ambiguous sprite head [2]: {:#X}", Hex(&head[2..3]));
             }
         }
 

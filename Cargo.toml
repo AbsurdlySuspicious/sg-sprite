@@ -16,7 +16,6 @@ libflate = "0.1.0"
 custom_error = "1.7"
 structopt = "0.3.0"
 byteorder = "1.3.2"
-hex = "0.3.2"
 
 [dev-dependencies]
 sha2 = "0.9.1"

@@ -13,10 +13,12 @@ use structopt::StructOpt;
 mod dep;
 mod draw;
 mod parse;
+mod util;
 
 use dep::*;
 use draw::*;
 use parse::*;
+use util::*;
 
 #[derive(StructOpt, Debug)]
 #[structopt()]
