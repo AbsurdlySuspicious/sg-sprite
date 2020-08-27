@@ -1,6 +1,6 @@
 [package]
 name = "sg-sprite"
-version = "0.2.3"
+version = "0.3.0"
 authors = ["AbsurdlySuspicious <repom2@airmail.cc>"]
 edition = "2018"
 
