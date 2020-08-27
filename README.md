@@ -26,12 +26,12 @@ but it should give approximate vision of the file structure.
     - **A:** GXT is a PS Vita texture format. Convert them into png before using sg-sprite
       with this tool: [Scarlet Project](https://github.com/xdanieldzd/Scarlet).  
       Converted PNGs will have ` (Image 0)` suffix but starting from 0.2.3
-      sg-sprite will pick them up nevertheless so you don't need to rename them
+      sg-sprite will pick them up nevertheless, so you don't need to rename them
       to match `.lay` files names.  
-      Resulting sprites may have glitchy background in this case and I suspect
+      Resulting sprites may have glitchy background in this case, and I suspect
       this is a gxt-to-png conversion issue (you can confirm it if you look into
       one of converted/source PNGs). Let me know if there is any
-      better maintained converter so I can replace the link.
+      better maintained converter, so I can replace the link.
 -
     - **Q:** I see some transparent PNGs with `_oX` suffix in output folder. What are these?
     - **A:** These are overlays. They are intended to be drawn on top of the sprite, 
@@ -53,10 +53,10 @@ but it should give approximate vision of the file structure.
 
 ## Install
 
-Prebuilts for **Windows** and **Linux** are available at 
+Builds for **Windows** and **Linux** are available at 
 [Github releases](https://github.com/AbsurdlySuspicious/sg-sprite/releases)
 
-Note that this app have no gui. You should run it from console.
+Note that this app has no gui. You should run it from the console.
 Run with `--help` for details on usage.
 
 Usage example:

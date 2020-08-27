@@ -29,7 +29,7 @@ Source file chunks are 32x32px regions in the source png composed into the final
 according to the needed sprite variant.
 
 Notes: 
-- In some games (Chaos;Child) lay files are compressed using zlib
+- In some games (Chaos;Child) lay files are zlib-compressed
 - All values in the file are LE 
 
 # Header
@@ -65,21 +65,21 @@ Types:
 - `D = 0x00` - Base sprite, always drawn first if exists
     - `A` - Sprite id. For base sprite it's usually `0x01`. 
             Base sprite id isn't actually used anywhere and probably can be ignored.
-	    Same appliable for other sprite's ids unless stated otherwise.
+	    Same applicable for other sprites ids unless stated otherwise.
     - `B, C` - always `0x00` 
 - `D = 0x20` - Sub sprite. Usually different faces for the base sprite. 
-               Implicitly depends on the base sprite if exists
-    - `A` - Sprite id. Used later for dependencies in `Dep` sprites
+               Implicitly depends on the base sprite if it exists.
+    - `A` - Sprite id. Used later for dependencies in `Dep` sprites.
     - `B, C` - always `0x00`
 - `D = 0x30 | 0x40 | 0x60` - Dep sprite. Usually mouths for lipsync.
     - `A` - Sprite id.
     - `B` - Id of sub sprite which this sprite depends on.
             Absence of sub sprite with this id implies that 
             this sprite depends directly on base or, if base
-            is absent too, doesn't depends on anything.
+            is absent too, doesn't depend on anything.
     - `C` - always `0x00`
 - `D = 0x50` - Overlay. Should be drawn on top of anything else with blending.
-               Doesn't define dependence on any other sprites, but obviously should be drawn last.
+               Doesn't define dependence on any other sprites.
     - `A` - Sprite id.
     - `B` - always `0x00`
     - `C` - `0x10` (purpose unknown)
@@ -106,8 +106,8 @@ Sprites should be drawn in reverse-dependence order on top of each other:
 
 `Base <- Sub <- Dep [<- Overlay]`
 
-Overlays are optional and usually appliable on top of any combination of sprites,
-so if certian overlay needed, it should be drawn last.
+Overlays are optional and can usually be applied on top of any combination of sprites,
+so if certain overlay needed, it should be drawn last.
 
 Overlays must be drawn with blending (they're contains significant alpha channel).
 Other sprite types doesn't need to be blended and can be drawn over canvas using simple byte replace.
