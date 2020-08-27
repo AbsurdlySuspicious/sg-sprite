@@ -1,6 +1,5 @@
 #![allow(dead_code, unused_imports)]
 
-use custom_error::custom_error;
 use lazy_format::lazy_format;
 use std::env;
 use std::fmt::Display;
@@ -19,6 +18,13 @@ use dep::*;
 use draw::*;
 use parse::*;
 use util::*;
+
+pub type SgSpriteErr = anyhow::Error;
+use anyhow::{anyhow as raise_e, bail as raise};
+
+pub fn print_err(e: impl Display) {
+    eprintln!("[E] {}", e);
+}
 
 #[derive(StructOpt, Debug)]
 #[structopt()]
@@ -41,36 +47,16 @@ pub struct Opts {
     pub dry_run: bool,
 }
 
-custom_error! { pub PErr
-  IO{source: io::Error} = "IO: {source}",
-  Img{source: image::ImageError} = "image: {source}",
-  Etc{msg: String} = "{msg}",
-}
-
-#[inline]
-fn raise_e(m: impl Into<String>) -> PErr {
-    PErr::Etc { msg: m.into() }
-}
-
-#[inline]
-fn raise<T>(m: impl Into<String>) -> Result<T, PErr> {
-    Err(raise_e(m))
-}
-
-pub fn print_err(e: impl Display) {
-    eprintln!("[E] {}", e);
-}
-
 const LAY_EXT: &[&str] = &["_.lay", ".lay"];
 
-pub fn lib_main(o: &Opts) -> Result<(), PErr> {
+pub fn lib_main(o: &Opts) -> Result<(), SgSpriteErr> {
     let layouts = &o.lay_files;
     let out_dir = o.dir.as_ref();
 
     match out_dir {
-        Some(d) if !d.is_dir() => return raise("out_dir isn't a directory"),
+        Some(d) if !d.is_dir() => raise!("out_dir isn't a directory"),
         None if !o.dry_run => {
-            return raise("Output dir should be specified (-d)\nSee --help for details");
+            raise!("Output dir should be specified (-d)\nSee --help for details");
         }
         _ => (),
     }
@@ -78,7 +64,7 @@ pub fn lib_main(o: &Opts) -> Result<(), PErr> {
     let total = o.lay_files.len();
 
     if total == 0 {
-        return raise("no .lay files provided");
+        raise!("no .lay files provided");
     }
 
     let status = |c: usize| move |t: &str| println!("[{}/{}] {}", c + 1, total, t);
@@ -99,14 +85,14 @@ fn lay_in(
     lay_file: &Path,
     limit: Option<usize>,
     status_cb: impl Fn(&str),
-) -> Result<(), PErr> {
+) -> Result<(), SgSpriteErr> {
     let limit = limit.unwrap_or(0);
 
     let (lay_filename, lay_ext) = lay_file
         .file_name()
         .and_then(|n| n.to_str())
         .and_then(|f| LAY_EXT.iter().find(|e| f.ends_with(**e)).map(|e| (f, e)))
-        .ok_or_else(|| raise_e("not a lay file"))?;
+        .ok_or_else(|| raise_e!("not a lay file"))?;
 
     let sprite_name =
         lay_filename.trim_end_matches(lay_ext);
@@ -131,7 +117,7 @@ fn lay_in(
                         .map(|n| n.starts_with(sprite_name) && n.ends_with(".png"))
                         .unwrap_or(false)
                 )
-                .ok_or_else(|| raise_e("No corresponding png file"))?;
+                .ok_or_else(|| raise_e!("No corresponding png file"))?;
 
             path_buf.pop();
             path_buf.push(src_filename.file_name());

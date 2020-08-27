@@ -1,5 +1,4 @@
 use super::*;
-use crate::raise;
 use image::{
     self, imageops, DynamicImage, GenericImage, GenericImageView, ImageBuffer, Pixels, Rgba,
     RgbaImage,
@@ -18,7 +17,7 @@ pub struct DrawPrep {
     img: DynamicImage,
 }
 
-pub fn draw_prep(img: &Path) -> Result<DrawPrep, PErr> {
+pub fn draw_prep(img: &Path) -> Result<DrawPrep, SgSpriteErr> {
     eprint!("draw: decode");
     Ok(DrawPrep { img: image::open(img)? })
 }
@@ -29,7 +28,7 @@ pub fn draw_sprites(
     sprites: &[&Sprite],
     pass: usize,
     lay: &ParsedLay,
-) -> Result<(), PErr> {
+) -> Result<(), SgSpriteErr> {
     macro_rules! status { ($($e:tt)*) => {
     eprint!("\rdraw {:02}: {}", pass, format_args!($($e)*));
   }}

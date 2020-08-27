@@ -1,5 +1,6 @@
 use crate::parse::{ParsedLay, Sprite, SpriteT};
-use crate::{raise, PErr};
+use crate::raise;
+use crate::SgSpriteErr;
 
 pub struct DepNode<'a> {
     pub sprite: &'a Sprite,
@@ -45,7 +46,7 @@ impl<'g> DepGraph<'g> {
         self.0.iter().filter(|d| d.ref_count == 0)
     }
 
-    pub fn resolve_layers(&self, leaf: &'g DepNode) -> Result<Vec<&'g Sprite>, PErr> {
+    pub fn resolve_layers(&self, leaf: &'g DepNode) -> Result<Vec<&'g Sprite>, SgSpriteErr> {
         let node_count = self.0.len();
         let mut layers: Vec<&Sprite> = Vec::with_capacity(3);
 
@@ -54,7 +55,7 @@ impl<'g> DepGraph<'g> {
             layers.push(s.sprite);
             next = s.depends_on.map(|d| &self.0[d]);
             if layers.len() > node_count {
-                return raise("sprite layer list resolve looped");
+                raise!("sprite layer list resolve looped");
             }
         }
 

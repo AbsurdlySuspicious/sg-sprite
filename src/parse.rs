@@ -57,18 +57,18 @@ fn read_u32_le(src: &mut impl Read) -> io::Result<u32> {
 }
 
 #[inline]
-fn read_f32_le_to_i32(src: &mut impl Read) -> Result<i32, PErr> {
+fn read_f32_le_to_i32(src: &mut impl Read) -> Result<i32, SgSpriteErr> {
     let f = src.read_f32::<LittleEndian>()?;
     if f.is_nan() || f.is_infinite() {
-        raise(fmt!("unsuitable f32 {}", f))?
+        raise!("unsuitable f32 {}", f)
     }
     if f.fract() != 0f32 {
-        raise(fmt!("f32 has fract part {}", f))?
+        raise!("f32 has fract part {}", f)
     }
     Ok(f as i32)
 }
 
-pub fn parse_lay(lay_file: &mut File) -> Result<ParsedLay, PErr> {
+pub fn parse_lay(lay_file: &mut File) -> Result<ParsedLay, SgSpriteErr> {
     let pre_read = read_u32_le(lay_file)?;
     lay_file.seek(SeekFrom::Start(0))?;
 
@@ -84,7 +84,7 @@ pub fn parse_lay(lay_file: &mut File) -> Result<ParsedLay, PErr> {
     }
 }
 
-fn parse_lay_impl(mut bf: impl Read) -> Result<ParsedLay, PErr> {
+fn parse_lay_impl(mut bf: impl Read) -> Result<ParsedLay, SgSpriteErr> {
     let mut c_buf = [0u8; COMMON_BUF_SZ];
 
     let sprite_count: u32;
@@ -118,7 +118,7 @@ fn parse_lay_impl(mut bf: impl Read) -> Result<ParsedLay, PErr> {
                 0x20 => SpriteT::Sub,
                 0x40 | 0x30 | 0x60 => SpriteT::Dep { exact_type: type_id, depends_on: head[1] },
                 0x50 => SpriteT::Overlay,
-                _ => return raise(fmt!("Unknown sprite type {:#X}", Hex(&head[3..4]))),
+                _ => raise!("Unknown sprite type {:#X}", Hex(&head[3..4])),
             },
             id: head[0],
             chunk_offset: read_u32_le(buf)? as usize,
@@ -142,7 +142,7 @@ fn parse_lay_impl(mut bf: impl Read) -> Result<ParsedLay, PErr> {
     }
 
     if sprites.is_empty() {
-        raise("no sprites")?;
+        raise!("no sprites");
     }
 
     // if the base is absent - don't depend subs on anything
