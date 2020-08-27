@@ -1,7 +1,7 @@
 [package]
 name = "sg-sprite"
 version = "0.2.3"
-authors = ["mfgm2"]
+authors = ["AbsurdlySuspicious <repom2@airmail.cc>"]
 edition = "2018"
 
 description = "Application for restoring Mages engine sprites (Steins;Gate, Steins;Gate 0, Chaos;Child)"
