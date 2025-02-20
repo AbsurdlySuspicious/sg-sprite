@@ -1,13 +1,14 @@
 #![allow(dead_code, unused_imports)]
 
+use clap;
+use clap::Parser as _;
 use lazy_format::lazy_format;
 use std::env;
 use std::fmt::Display;
 use std::format as fmt;
-use std::path::{Path, PathBuf};
-use std::fs::{File, DirEntry};
+use std::fs::{DirEntry, File};
 use std::io;
-use structopt::StructOpt;
+use std::path::{Path, PathBuf};
 
 mod dep;
 mod draw;
@@ -26,25 +27,31 @@ pub fn print_err(e: impl Display) {
     eprintln!("[E] {}", e);
 }
 
-#[derive(StructOpt, Debug)]
-#[structopt()]
+#[derive(clap::Parser, Debug)]
+#[command(name = "sg-sprite")]
 pub struct Opts {
     /// Output dir
-    #[structopt(short, long, parse(from_os_str))]
+    #[arg(short, long, name = "DIRECTORY")]
     pub dir: Option<PathBuf>,
 
     /// Limit variants to draw per sprite
-    #[structopt(short, long)]
+    #[arg(short, long)]
     pub limit: Option<usize>,
 
     /// .lay files to parse
-    #[structopt(name = "LAY_FILES", parse(from_os_str))]
+    #[arg(name = "LAY_FILES")]
     pub lay_files: Vec<PathBuf>,
 
     /// Perform parsing only to test for errors.
     /// Do not compose actual images
-    #[structopt(long)]
+    #[arg(long)]
     pub dry_run: bool,
+}
+
+impl Opts {
+    pub fn from_args() -> Self {
+        Opts::parse()
+    }
 }
 
 const LAY_EXT: &[&str] = &["_.lay", ".lay"];
