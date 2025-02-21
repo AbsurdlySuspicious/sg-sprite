@@ -1,11 +1,11 @@
 use super::*;
 use image::{
     self, imageops, DynamicImage, GenericImage, GenericImageView, ImageBuffer, Pixels, Rgba,
-    RgbaImage,
+    RgbaImage, codecs::png
 };
 use std::format as fmt;
 use std::fs::File;
-use std::io::{BufReader, Read};
+use std::io::{BufReader, BufWriter, Read};
 use std::path::Path;
 
 pub const BLOCK_W: u32 = 32;
@@ -58,13 +58,15 @@ pub fn draw_sprites(
             let mut dst_chunk = imageops::crop(&mut canvas, cx, cy, BLOCK_W, BLOCK_H);
             let src_chunk = imageops::crop(&mut src.img, sx, sy, BLOCK_W, BLOCK_H);
 
-            imageops::replace(&mut dst_chunk, &src_chunk, 0, 0);
+            imageops::replace(&mut *dst_chunk, &*src_chunk, 0, 0);
             chunk_count += 1;
         }
     }
 
     eprint!(", encoding: ");
-    canvas.save(png_out)?;
+    let mut out_file = BufWriter::new(File::create(png_out)?);
+    let encoder = png::PngEncoder::new_with_quality(&mut out_file, png::CompressionType::default(), png::FilterType::default());
+    canvas.write_with_encoder(encoder)?;
 
     eprintln!("done");
     Ok(())

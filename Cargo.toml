@@ -22,7 +22,7 @@ sha2 = "0.10.8"
 data-encoding = "2.3"
 
 [dependencies.image]
-version = "0.23.6"
+version = "0.25.5"
 default-features = false
 features = ["png"]
 
