@@ -74,7 +74,7 @@ fn validate_output() {
 
         let mut hasher = Sha256::new();
         let img = image::open(&path).unwrap();
-        hasher.write_all(img.to_bytes().as_slice()).unwrap();
+        hasher.write_all(img.as_bytes()).unwrap();
 
         let chk_hash = hasher.finalize_fixed();
         if populate_mode {
